@@ -24,8 +24,8 @@
  * Created on: August 01, 2013
  * Author: Hector PEREZ PONCE
  */
-#ifndef XPADCAMERA_H_
-#define XPADCAMERA_H_
+#ifndef IMXPADCAMERA_H_
+#define IMXPADCAMERA_H_
 
 #include <stdlib.h>
 #include <limits>
@@ -411,4 +411,4 @@ private:
 } // namespace imXpad
 } // namespace lima
 
-#endif /* XPADCAMERA_H_ */
+#endif /* IMXPADCAMERA_H_ */
