@@ -20,12 +20,12 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //###########################################################################
 /*
-* XpadCamera.h
-* Created on: August 01, 2013
-* Author: Hector PEREZ PONCE
-*/
-#ifndef XPADCAMERA_H_
-#define XPADCAMERA_H_
+ * XpadCamera.h
+ * Created on: August 01, 2013
+ * Author: Hector PEREZ PONCE
+ */
+#ifndef IMXPADCAMERA_H_
+#define IMXPADCAMERA_H_
 
 #include <stdlib.h>
 #include <limits>
@@ -416,4 +416,4 @@ namespace lima {
   } // namespace imXpad
 } // namespace lima
 
-#endif /* XPADCAMERA_H_ */
+#endif /* IMXPADCAMERA_H_ */
