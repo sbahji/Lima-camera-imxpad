@@ -456,8 +456,8 @@ vector<string> XpadClient::getDebugMessages() const {
 
 void XpadClient::sendCmd(const string cmd) {
     //cout << "Inside sendCmd" << endl;
-    cout << "cmd: " << cmd << endl;
     DEB_MEMBER_FUNCT();
+    DEB_TRACE() << "cmd: " << cmd ;
     int r, len;
     char *p;
     string command = cmd + "\n";
@@ -538,7 +538,7 @@ int XpadClient::waitForResponse(int& value) {
             break;
         case CLN_NEXT_INTRET:
             value = code;
-            cout << "\t---> value: " << value << endl;
+            DEB_TRACE() << "\t---> value: " << value ;
             if (value == -1){
                 string error_message;
                 waitForResponse(error_message);
@@ -597,7 +597,7 @@ int XpadClient::waitForResponse(double& value) {
             return -1;
         case CLN_NEXT_DBLRET:
             value = code;
-            cout << "\t---> value: " << value << endl;
+            DEB_TRACE() << "\t---> value: " << value ;
             return 0;
         case CLN_NEXT_STRRET:
             error_handler("Server responded with a string.");
@@ -649,7 +649,7 @@ int XpadClient::waitForResponse(string& value) {
             error_handler("Server responded with a double");
             return -1;
         case CLN_NEXT_STRRET:
-            cout << "\t---> message: " << value << endl;
+            DEB_TRACE() << "\t---> message: " << value ;
             return (value.length() == 0) ? -1 : 0;
         default:
             THROW_HW_ERROR(Error) << "Programming error. Please report";
