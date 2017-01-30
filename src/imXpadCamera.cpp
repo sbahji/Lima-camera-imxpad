@@ -42,7 +42,16 @@ using namespace std;
 using namespace lima;
 using namespace lima::imXpad;
 
-
+#define CHECK_DETECTOR_ACCESS \
+{ \
+	if (m_thread_running == false || (m_thread_running && m_process_id > 0) || (m_acq_frame_nb == m_nb_frames)) \
+	{ \	     
+	} \
+	else \
+	{ \
+	    return; \
+	} \
+} \
 
 //---------------------------
 //- utility thread
@@ -316,8 +325,7 @@ int Camera::getDataExposeReturn() {
 void Camera::getStatus(XpadStatus& status) {
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::getStatus ***********";
-
-  if (m_thread_running == false || (m_thread_running && m_process_id > 0) || (m_acq_frame_nb == m_nb_frames)){
+  CHECK_DETECTOR_ACCESS
 
     stringstream cmd;
     string str;
@@ -340,7 +348,7 @@ void Camera::getStatus(XpadStatus& status) {
     } else if (state.compare("Resetting") == 0) {
       status.state = XpadStatus::Resetting;
     }
-  }
+
 
   DEB_TRACE() << "XpadStatus.state is [" << status.state << "]";
 
@@ -684,14 +692,13 @@ Camera::AcqThread::~AcqThread() {
 void Camera::getImageSize(Size& size) {
 
   DEB_MEMBER_FUNCT();
-
+  CHECK_DETECTOR_ACCESS
   string message, ret;
   stringstream cmd;
 
   cmd.str(string());
   cmd << "GetImageSize";
   m_xpad->sendWait(cmd.str(), ret);
-
   int pos = ret.find("x");
 
   int row = atoi(ret.substr(0, pos).c_str());
@@ -747,7 +754,7 @@ void Camera::setImageType(ImageType pixel_depth) {
 
 void Camera::getDetectorType(std::string& type) {
   DEB_MEMBER_FUNCT();
-
+  CHECK_DETECTOR_ACCESS
   string message;
   stringstream cmd;
 
@@ -760,7 +767,7 @@ void Camera::getDetectorType(std::string& type) {
 
 void Camera::getDetectorModel(std::string& model) {
   DEB_MEMBER_FUNCT();
-
+  CHECK_DETECTOR_ACCESS
   string message;
   stringstream cmd;
 
