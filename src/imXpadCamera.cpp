@@ -113,33 +113,33 @@ Camera::Camera(string hostname, int port) : m_hostname(hostname), m_port(port){
 
   string xpad_type, xpad_model;
 
-  this->init();
-  this->getDetectorType(xpad_type);
-  this->getDetectorModel(xpad_model);
-  this->getModuleMask();
-  this->getChipMask();
-  this->getModuleNumber();
-  this->getChipNumber();
-  this->setImageType(Bpp32S);
-  this->setNbFrames(1);
-  this->setAcquisitionMode(0); //standard
-  this->setExpTime(1);
-  this->setLatTime(5000);
-  this->setOverflowTime(4000);
-  this->setImageFileFormat(1); //binary
-  this->setGeometricalCorrectionFlag(1);
-  this->setFlatFieldCorrectionFlag(0);
-  this->setImageTransferFlag(1);
-  this->setTrigMode(IntTrig);
-  this->setOutputSignalMode(0);
-  this->setStackImages(1);
-  this->setWaitAcqEndTime(10000);
-  m_burstNumber = this->getConnectionID();
+  init();
+  getDetectorType(xpad_type);
+  getDetectorModel(xpad_model);
+  getModuleMask();
+  getChipMask();
+  getModuleNumber();
+  getChipNumber();
+  setImageType(Bpp32S);
+  setNbFrames(1);
+  setAcquisitionMode(0); //standard
+  setExpTime(1);
+  setLatTime(5000);
+  setOverflowTime(4000);
+  setImageFileFormat(1); //binary
+  setGeometricalCorrectionFlag(1);
+  setFlatFieldCorrectionFlag(0);
+  setImageTransferFlag(1);
+  setTrigMode(IntTrig);
+  setOutputSignalMode(0);
+  setStackImages(1);
+  setWaitAcqEndTime(10000);
+  getBurstNumber();
 }
 
 Camera::~Camera() {
   DEB_DESTRUCTOR();
-  this->quit();
+  quit();
 }
 
 int Camera::init() {
@@ -199,7 +199,7 @@ int Camera::prepareAcq() {
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::prepareAcq ***********";
 
-  //this->waitAcqEnd();
+  //waitAcqEnd();
 
   int value;
   stringstream cmd1;
@@ -221,7 +221,7 @@ int Camera::prepareAcq() {
       stringstream fileName;
       fileName << "/opt/imXPAD/tmp_corrected/burst_" << m_burstNumber << "_*";
       remove(fileName.str().c_str());
-      //m_burstNumber = this->getBurstNumber();
+      //m_burstNumber = getBurstNumber();
 
       //cout << "Burst number = " << m_burstNumber << endl;
     }
@@ -238,7 +238,7 @@ void Camera::startAcq() {
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::startAcq ***********";
 
-  this->waitAcqEnd();
+  waitAcqEnd();
 
   m_acq_frame_nb = 0;
   StdBufferCbMgr& buffer_mgr = m_bufferCtrlObj.getBuffer();
@@ -280,7 +280,7 @@ void Camera::stopAcq() {
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::stopAcq ***********";
 
-  //this->waitAcqEnd();
+  //waitAcqEnd();
 
   DEB_TRACE() << "********** Outside of Camera::stopAcq ***********";
 }
@@ -1106,7 +1106,7 @@ int Camera::digitalTest(unsigned short mode){
   int columns = IMG_COLUMN * m_chip_number;
 
   int32_t buff[rows * columns];
-  this->readFrameExpose(buff, 1);
+  readFrameExpose(buff, 1);
 
   int32_t val;
   //Saving Digital Test image to disk
@@ -1122,7 +1122,7 @@ int Camera::digitalTest(unsigned short mode){
   }
   file.close();
 
-  ret = this->getDataExposeReturn();
+  ret = getDataExposeReturn();
 
   if(!ret)
   DEB_TRACE() << "Digital Test performed SUCCESFULLY";
@@ -1358,7 +1358,7 @@ int Camera::loadDefaultConfigGValues(){
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::LoadDefaultConfigGValues ***********";
 
-  this->waitAcqEnd();
+  waitAcqEnd();
 
   m_wait_flag = false;
   m_quit = false;
@@ -1375,7 +1375,7 @@ int Camera::ITHLIncrease(){
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::ITHLIncrease ***********";
 
-  this->waitAcqEnd();
+  waitAcqEnd();
 
   m_wait_flag = false;
   m_quit = false;
@@ -1394,7 +1394,7 @@ int Camera::ITHLDecrease(){
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::ITHLDecrease ***********";
 
-  this->waitAcqEnd();
+  waitAcqEnd();
 
   m_wait_flag = false;
   m_quit = false;
@@ -1415,7 +1415,7 @@ int Camera::loadFlatConfigL(unsigned short flat_value)
 
   DEB_TRACE() << "********** Inside of Camera::loadFlatConfig ***********";
 
-  this->waitAcqEnd();
+  waitAcqEnd();
 
   m_flat_value = flat_value;
   m_wait_flag = false;
@@ -1528,7 +1528,7 @@ void Camera:: setGeometricalCorrectionFlag(unsigned short flag){
   m_xpad->sendWait(cmd.str(), ret);
 
   if ( ret == 0)
-  this->getImageSize(size);
+      getImageSize(size);
 
   m_image_size = size;
   ImageType pixel_depth;
@@ -1561,8 +1561,8 @@ void Camera:: setDeadNoisyPixelCorrectionFlag(unsigned short flag){
   DEB_TRACE() << "Camera::setDeadNoisyPixelCorretctionFlag - " << DEB_VAR1(flag);
   DEB_PARAM() << DEB_VAR1(flag);
 
-  this->setNoisyPixelCorrectionFlag(flag);
-  this->setDeadPixelCorrectionFlag(flag);
+  setNoisyPixelCorrectionFlag(flag);
+  setDeadPixelCorrectionFlag(flag);
 }
 
 unsigned short Camera::getDeadNoisyPixelCorrectionFlag(){
@@ -1570,8 +1570,8 @@ unsigned short Camera::getDeadNoisyPixelCorrectionFlag(){
 
   unsigned short ret1, ret2;
 
-  ret1 = this->getNoisyPixelCorrectionFlag();
-  ret2 = this->getDeadPixelCorrectionFlag();
+  ret1 = getNoisyPixelCorrectionFlag();
+  ret2 = getDeadPixelCorrectionFlag();
 
   return ret1 & ret2;
 }
@@ -1731,7 +1731,7 @@ int Camera::calibrationOTN(unsigned short calibrationConfiguration){
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::calibrationOTN ***********";
 
-  this->waitAcqEnd();
+  waitAcqEnd();
 
   m_wait_flag = false;
   m_quit = false;
@@ -1753,7 +1753,7 @@ int Camera::calibrationOTNPulse(unsigned short calibrationConfiguration){
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::calibrationOTNPulse ***********";
 
-  this->waitAcqEnd();
+  waitAcqEnd();
 
   m_wait_flag = false;
   m_quit = false;
@@ -1776,7 +1776,7 @@ int Camera::calibrationBEAM(unsigned int time, unsigned int ITHLmax, unsigned sh
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::calibrationBEAM ***********";
 
-  this->waitAcqEnd();
+  waitAcqEnd();
 
   m_wait_flag = false;
   m_quit = false;
@@ -1800,7 +1800,7 @@ int Camera::loadCalibrationFromFile(char *fpath){
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::loadCalibrationFromFile ***********";
 
-  this->waitAcqEnd();
+  waitAcqEnd();
 
   m_file_path.clear();
   m_file_path.append(fpath);
@@ -1822,7 +1822,7 @@ int Camera::saveCalibrationToFile(char *fpath){
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::saveCalibrationToFile ***********";
 
-  this->waitAcqEnd();
+  waitAcqEnd();
 
   m_file_path.clear();
   m_file_path.append(fpath);
@@ -1936,7 +1936,7 @@ void Camera::exit(){
 
 
 int Camera::getConnectionID(){
-  return this->getBurstNumber();
+  return getBurstNumber();
 }
 
 int Camera::createWhiteImage(char* fileName){
