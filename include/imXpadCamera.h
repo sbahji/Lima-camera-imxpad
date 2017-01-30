@@ -319,7 +319,7 @@ namespace lima {
       int setWhiteImage(char* fileName);
 
       //!< Get a list of White images stored in the server
-      void getWhiteImagesInDir();
+      std::string getWhiteImagesInDir();
 
       //!< Read detector temperature
       void readDetectorTemperature();

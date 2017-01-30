@@ -1986,7 +1986,7 @@ int Camera::setWhiteImage(char* fileName){
   return ret;
 }
 
-void Camera::getWhiteImagesInDir(){
+std::string Camera::getWhiteImagesInDir(){
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::getWhiteImagesInDir ***********";
 
@@ -1997,9 +1997,10 @@ void Camera::getWhiteImagesInDir(){
   cmd << "GetWhiteImagesInDir";
   m_xpad->sendWait(cmd.str(), message);
 
-  DEB_TRACE() << "List of USB devices connected: " << message;
+  DEB_TRACE() << "List of White Images In DIR: " << message;
 
   DEB_TRACE() << "********** Outside of Camera::getWhiteImagesInDir ***********";
+  return message;
 }
 void Camera::readDetectorTemperature(){
 }
