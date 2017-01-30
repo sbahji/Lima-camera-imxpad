@@ -145,7 +145,7 @@ Camera::~Camera() {
 int Camera::init() {
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::init ***********";
-
+  m_acq_frame_nb = 0;
   int ret;
   stringstream cmd;
 
