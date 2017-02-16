@@ -42,7 +42,16 @@ using namespace std;
 using namespace lima;
 using namespace lima::imXpad;
 
-
+#define CHECK_DETECTOR_ACCESS \
+{ \
+	if (m_thread_running == false || (m_thread_running && m_process_id > 0) || (m_acq_frame_nb == m_nb_frames)) \
+	{ \	     
+	} \
+	else \
+	{ \
+	    return; \
+	} \
+} \
 
 //---------------------------
 //- utility thread
@@ -104,39 +113,39 @@ Camera::Camera(string hostname, int port) : m_hostname(hostname), m_port(port){
 
   string xpad_type, xpad_model;
 
-  this->init();
-  this->getDetectorType(xpad_type);
-  this->getDetectorModel(xpad_model);
-  this->getModuleMask();
-  this->getChipMask();
-  this->getModuleNumber();
-  this->getChipNumber();
-  this->setImageType(Bpp32S);
-  this->setNbFrames(1);
-  this->setAcquisitionMode(0); //standard
-  this->setExpTime(1);
-  this->setLatTime(5000);
-  this->setOverflowTime(4000);
-  this->setImageFileFormat(1); //binary
-  this->setGeometricalCorrectionFlag(1);
-  this->setFlatFieldCorrectionFlag(0);
-  this->setImageTransferFlag(1);
-  this->setTrigMode(IntTrig);
-  this->setOutputSignalMode(0);
-  this->setStackImages(1);
-  this->setWaitAcqEndTime(10000);
-  m_burstNumber = this->getConnectionID();
+  init();
+  getDetectorType(xpad_type);
+  getDetectorModel(xpad_model);
+  getModuleMask();
+  getChipMask();
+  getModuleNumber();
+  getChipNumber();
+  setImageType(Bpp32S);
+  setNbFrames(1);
+  setAcquisitionMode(0); //standard
+  setExpTime(1);
+  setLatTime(5000);
+  setOverflowTime(4000);
+  setImageFileFormat(1); //binary
+  setGeometricalCorrectionFlag(1);
+  setFlatFieldCorrectionFlag(0);
+  setImageTransferFlag(1);
+  setTrigMode(IntTrig);
+  setOutputSignalMode(0);
+  setStackImages(1);
+  setWaitAcqEndTime(10000);
+  getBurstNumber();
 }
 
 Camera::~Camera() {
   DEB_DESTRUCTOR();
-  this->quit();
+  quit();
 }
 
 int Camera::init() {
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::init ***********";
-
+  m_acq_frame_nb = 0;
   int ret;
   stringstream cmd;
 
@@ -190,7 +199,7 @@ int Camera::prepareAcq() {
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::prepareAcq ***********";
 
-  //this->waitAcqEnd();
+  //waitAcqEnd();
 
   int value;
   stringstream cmd1;
@@ -212,7 +221,7 @@ int Camera::prepareAcq() {
       stringstream fileName;
       fileName << "/opt/imXPAD/tmp_corrected/burst_" << m_burstNumber << "_*";
       remove(fileName.str().c_str());
-      //m_burstNumber = this->getBurstNumber();
+      //m_burstNumber = getBurstNumber();
 
       //cout << "Burst number = " << m_burstNumber << endl;
     }
@@ -229,7 +238,7 @@ void Camera::startAcq() {
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::startAcq ***********";
 
-  this->waitAcqEnd();
+  waitAcqEnd();
 
   m_acq_frame_nb = 0;
   StdBufferCbMgr& buffer_mgr = m_bufferCtrlObj.getBuffer();
@@ -271,7 +280,7 @@ void Camera::stopAcq() {
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::stopAcq ***********";
 
-  //this->waitAcqEnd();
+  //waitAcqEnd();
 
   DEB_TRACE() << "********** Outside of Camera::stopAcq ***********";
 }
@@ -316,8 +325,7 @@ int Camera::getDataExposeReturn() {
 void Camera::getStatus(XpadStatus& status) {
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::getStatus ***********";
-
-  if (m_thread_running == false || (m_thread_running && m_process_id > 0) || (m_acq_frame_nb == m_nb_frames)){
+  CHECK_DETECTOR_ACCESS
 
     stringstream cmd;
     string str;
@@ -340,7 +348,7 @@ void Camera::getStatus(XpadStatus& status) {
     } else if (state.compare("Resetting") == 0) {
       status.state = XpadStatus::Resetting;
     }
-  }
+
 
   DEB_TRACE() << "XpadStatus.state is [" << status.state << "]";
 
@@ -684,14 +692,13 @@ Camera::AcqThread::~AcqThread() {
 void Camera::getImageSize(Size& size) {
 
   DEB_MEMBER_FUNCT();
-
+  CHECK_DETECTOR_ACCESS
   string message, ret;
   stringstream cmd;
 
   cmd.str(string());
   cmd << "GetImageSize";
   m_xpad->sendWait(cmd.str(), ret);
-
   int pos = ret.find("x");
 
   int row = atoi(ret.substr(0, pos).c_str());
@@ -747,7 +754,7 @@ void Camera::setImageType(ImageType pixel_depth) {
 
 void Camera::getDetectorType(std::string& type) {
   DEB_MEMBER_FUNCT();
-
+  CHECK_DETECTOR_ACCESS
   string message;
   stringstream cmd;
 
@@ -760,7 +767,7 @@ void Camera::getDetectorType(std::string& type) {
 
 void Camera::getDetectorModel(std::string& model) {
   DEB_MEMBER_FUNCT();
-
+  CHECK_DETECTOR_ACCESS
   string message;
   stringstream cmd;
 
@@ -1099,7 +1106,7 @@ int Camera::digitalTest(unsigned short mode){
   int columns = IMG_COLUMN * m_chip_number;
 
   int32_t buff[rows * columns];
-  this->readFrameExpose(buff, 1);
+  readFrameExpose(buff, 1);
 
   int32_t val;
   //Saving Digital Test image to disk
@@ -1115,7 +1122,7 @@ int Camera::digitalTest(unsigned short mode){
   }
   file.close();
 
-  ret = this->getDataExposeReturn();
+  ret = getDataExposeReturn();
 
   if(!ret)
   DEB_TRACE() << "Digital Test performed SUCCESFULLY";
@@ -1351,7 +1358,7 @@ int Camera::loadDefaultConfigGValues(){
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::LoadDefaultConfigGValues ***********";
 
-  this->waitAcqEnd();
+  waitAcqEnd();
 
   m_wait_flag = false;
   m_quit = false;
@@ -1368,7 +1375,7 @@ int Camera::ITHLIncrease(){
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::ITHLIncrease ***********";
 
-  this->waitAcqEnd();
+  waitAcqEnd();
 
   m_wait_flag = false;
   m_quit = false;
@@ -1387,7 +1394,7 @@ int Camera::ITHLDecrease(){
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::ITHLDecrease ***********";
 
-  this->waitAcqEnd();
+  waitAcqEnd();
 
   m_wait_flag = false;
   m_quit = false;
@@ -1408,7 +1415,7 @@ int Camera::loadFlatConfigL(unsigned short flat_value)
 
   DEB_TRACE() << "********** Inside of Camera::loadFlatConfig ***********";
 
-  this->waitAcqEnd();
+  waitAcqEnd();
 
   m_flat_value = flat_value;
   m_wait_flag = false;
@@ -1521,7 +1528,7 @@ void Camera:: setGeometricalCorrectionFlag(unsigned short flag){
   m_xpad->sendWait(cmd.str(), ret);
 
   if ( ret == 0)
-  this->getImageSize(size);
+      getImageSize(size);
 
   m_image_size = size;
   ImageType pixel_depth;
@@ -1554,8 +1561,8 @@ void Camera:: setDeadNoisyPixelCorrectionFlag(unsigned short flag){
   DEB_TRACE() << "Camera::setDeadNoisyPixelCorretctionFlag - " << DEB_VAR1(flag);
   DEB_PARAM() << DEB_VAR1(flag);
 
-  this->setNoisyPixelCorrectionFlag(flag);
-  this->setDeadPixelCorrectionFlag(flag);
+  setNoisyPixelCorrectionFlag(flag);
+  setDeadPixelCorrectionFlag(flag);
 }
 
 unsigned short Camera::getDeadNoisyPixelCorrectionFlag(){
@@ -1563,8 +1570,8 @@ unsigned short Camera::getDeadNoisyPixelCorrectionFlag(){
 
   unsigned short ret1, ret2;
 
-  ret1 = this->getNoisyPixelCorrectionFlag();
-  ret2 = this->getDeadPixelCorrectionFlag();
+  ret1 = getNoisyPixelCorrectionFlag();
+  ret2 = getDeadPixelCorrectionFlag();
 
   return ret1 & ret2;
 }
@@ -1724,7 +1731,7 @@ int Camera::calibrationOTN(unsigned short calibrationConfiguration){
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::calibrationOTN ***********";
 
-  this->waitAcqEnd();
+  waitAcqEnd();
 
   m_wait_flag = false;
   m_quit = false;
@@ -1746,7 +1753,7 @@ int Camera::calibrationOTNPulse(unsigned short calibrationConfiguration){
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::calibrationOTNPulse ***********";
 
-  this->waitAcqEnd();
+  waitAcqEnd();
 
   m_wait_flag = false;
   m_quit = false;
@@ -1769,7 +1776,7 @@ int Camera::calibrationBEAM(unsigned int time, unsigned int ITHLmax, unsigned sh
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::calibrationBEAM ***********";
 
-  this->waitAcqEnd();
+  waitAcqEnd();
 
   m_wait_flag = false;
   m_quit = false;
@@ -1793,7 +1800,7 @@ int Camera::loadCalibrationFromFile(char *fpath){
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::loadCalibrationFromFile ***********";
 
-  this->waitAcqEnd();
+  waitAcqEnd();
 
   m_file_path.clear();
   m_file_path.append(fpath);
@@ -1815,7 +1822,7 @@ int Camera::saveCalibrationToFile(char *fpath){
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::saveCalibrationToFile ***********";
 
-  this->waitAcqEnd();
+  waitAcqEnd();
 
   m_file_path.clear();
   m_file_path.append(fpath);
@@ -1929,7 +1936,7 @@ void Camera::exit(){
 
 
 int Camera::getConnectionID(){
-  return this->getBurstNumber();
+  return getBurstNumber();
 }
 
 int Camera::createWhiteImage(char* fileName){
@@ -1979,7 +1986,7 @@ int Camera::setWhiteImage(char* fileName){
   return ret;
 }
 
-void Camera::getWhiteImagesInDir(){
+std::string Camera::getWhiteImagesInDir(){
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::getWhiteImagesInDir ***********";
 
@@ -1990,9 +1997,10 @@ void Camera::getWhiteImagesInDir(){
   cmd << "GetWhiteImagesInDir";
   m_xpad->sendWait(cmd.str(), message);
 
-  DEB_TRACE() << "List of USB devices connected: " << message;
+  DEB_TRACE() << "List of White Images In DIR: " << message;
 
   DEB_TRACE() << "********** Outside of Camera::getWhiteImagesInDir ***********";
+  return message;
 }
 void Camera::readDetectorTemperature(){
 }
