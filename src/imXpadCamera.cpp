@@ -1,3 +1,4 @@
+
 //###########################################################################
 // This file is part of LImA, a Library for Image
 //
@@ -44,7 +45,7 @@ using namespace lima::imXpad;
 
 #define CHECK_DETECTOR_ACCESS \
 { \
-	if (m_thread_running == false || (m_thread_running && m_process_id > 0) || (m_acq_frame_nb == m_nb_frames)) \
+	if (m_thread_running == false || (m_thread_running && m_process_id >0) || (m_acq_frame_nb == m_nb_frames)) \
 	{ \	     
 	} \
 	else \
@@ -110,7 +111,7 @@ Camera::Camera(string hostname, int port) : m_hostname(hostname), m_port(port){
   if (m_xpad_alt->connectToServer(m_hostname, m_port) < 0) {
     THROW_HW_ERROR(Error) << "[ " << m_xpad_alt->getErrorMessage() << " ]";
   }
-
+m_state.state = XpadStatus::Idle;
   string xpad_type, xpad_model;
 
   init();
@@ -325,8 +326,7 @@ int Camera::getDataExposeReturn() {
 void Camera::getStatus(XpadStatus& status) {
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::getStatus ***********";
-  CHECK_DETECTOR_ACCESS
-
+  CHECK_DETECTOR_ACCESS 
     stringstream cmd;
     string str;
     unsigned short pos;
@@ -348,8 +348,7 @@ void Camera::getStatus(XpadStatus& status) {
     } else if (state.compare("Resetting") == 0) {
       status.state = XpadStatus::Resetting;
     }
-
-
+m_state.state = status.state;
   DEB_TRACE() << "XpadStatus.state is [" << status.state << "]";
 
   DEB_TRACE() << "********** Outside of Camera::getStatus ***********";
@@ -546,7 +545,7 @@ void Camera::AcqThread::threadFunction() {
           pos = m_cam.m_file_path.length() - 4;
         }
 
-        m_cam.m_file_path.replace(pos, 4, ".cfg");
+        m_cam.m_file_path.replace(pos, 4, ".cfg");        
         ret1 = m_cam.loadConfigGFromFile((char *) m_cam.m_file_path.c_str());
 
         if (ret1 == 0){
@@ -565,7 +564,6 @@ void Camera::AcqThread::threadFunction() {
           m_cam.m_file_path.append(".cfg");
           pos = m_cam.m_file_path.length() - 4;
         }
-
         m_cam.m_file_path.replace(pos, 4, ".cfg");
         ret1 = m_cam.saveConfigGToFile((char *) m_cam.m_file_path.c_str());
 
@@ -1138,6 +1136,7 @@ int Camera::loadConfigGFromFile(char *fpath){
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::loadConfigGFromFile ***********";
 
+  DEB_TRACE()<<"LoadConfigGFromFile : "<<fpath;
   int ret;
   stringstream cmd;
 
@@ -1163,7 +1162,7 @@ int Camera::loadConfigGFromFile(char *fpath){
 int Camera::saveConfigGToFile(char *fpath){
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::saveConfigGToFile ***********";
-
+  DEB_TRACE()<<"saveConfigGToFile : "<<fpath;
   int ret;
   unsigned short  regid;
 
@@ -1434,7 +1433,7 @@ int Camera::loadFlatConfigL(unsigned short flat_value)
 int Camera::loadConfigLFromFile(char *fpath){
   DEB_MEMBER_FUNCT();
   DEB_TRACE() << "********** Inside of Camera::loadConfigLFromFile ***********";
-
+  DEB_TRACE()<<"LoadConfigLFromFile : "<<fpath;
   int ret;
   stringstream cmd;
 

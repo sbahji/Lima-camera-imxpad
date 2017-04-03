@@ -122,12 +122,12 @@ void Interface::getStatus(StatusType& status) {
         break;
     case Camera::XpadStatus::CalibrationManipulation:
         status.det = DetReadout;
-        status.acq = AcqRunning;
+        status.acq = AcqConfig;
         //std::cout << "Camera loading/saving a calibration" << std::endl;
         break;
     case Camera::XpadStatus::Calibrating:
         status.det = DetExposure;
-        status.acq = AcqRunning;
+        status.acq = AcqConfig;
         //std::cout << "Camera calibrating" << std::endl;
         break;
     case Camera::XpadStatus::DigitalTest:

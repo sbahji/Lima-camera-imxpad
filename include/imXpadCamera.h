@@ -411,6 +411,7 @@ namespace lima {
 
       // Buffer control object
       SoftBufferCtrlObj m_bufferCtrlObj;
+      XpadStatus m_state;
     };
 
   } // namespace imXpad
