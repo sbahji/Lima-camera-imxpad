@@ -159,7 +159,6 @@ private:
 	Camera& m_cam;
 	CapList m_cap_list;
 	DetInfoCtrlObj m_det_info;
-    HwBufferCtrlObj*  m_bufferCtrlObj;
     SyncCtrlObj m_sync;
     Config* m_config;
 };

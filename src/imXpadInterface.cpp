@@ -39,7 +39,6 @@ Interface::Interface(Camera& cam) :
     HwDetInfoCtrlObj *det_info = &m_det_info;
     m_cap_list.push_back(det_info);
 
-    m_bufferCtrlObj = m_cam.getBufferCtrlObj();
     HwBufferCtrlObj *buffer = m_cam.getBufferCtrlObj();
     m_cap_list.push_back(buffer);
 
@@ -83,10 +82,6 @@ void Interface::prepareAcq() {
     m_det_info.getMaxImageSize(image_size);
     m_det_info.getDefImageType(image_type);
     
-    FrameDim frame_dim(image_size, image_type);
-    m_bufferCtrlObj->setFrameDim(frame_dim);
-    m_bufferCtrlObj->setNbConcatFrames(1);
-    m_bufferCtrlObj->setNbBuffers(1);
 }
 
 void Interface::startAcq() {
