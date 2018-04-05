@@ -91,11 +91,10 @@ void Interface::startAcq() {
 
 void Interface::stopAcq() {
     DEB_MEMBER_FUNCT();
-    Camera::XpadStatus xpadStatus;  
-    m_cam.getStatus(xpadStatus);  
-    
-    if (xpadStatus.state != Camera::XpadStatus::Idle)    
-	m_cam.abortCurrentProcess();
+////    Camera::XpadStatus xpadStatus;  
+////    m_cam.getStatus(xpadStatus);  
+////    if (xpadStatus.state != Camera::XpadStatus::Idle)    
+    	m_cam.abortCurrentProcess();
     m_cam.waitAcqEnd();
 }
 
