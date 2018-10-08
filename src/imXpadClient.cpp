@@ -270,33 +270,49 @@ int XpadClient::getDataExpose(void *bptr, unsigned short xpadFormat) {
     uint32_t line_final_image = 0;
     uint32_t column_final_image = 0;
     uint32_t bytes_received = 0;
-
+	ssize_t bytes = 0;
+	DEB_TRACE() << "read header from server [BEGIN]";
     unsigned char data_chain[3*sizeof(int32_t)];
+	while(bytes_received < 3*sizeof(uint32_t)){
+		bytes = read(m_skt, data_chain + bytes_received, 3*sizeof(uint32_t) - bytes_received);
+		DEB_TRACE() << "bytes = " << bytes;
+		if(bytes < 0){
+			DEB_TRACE() << "Read from server error : " << strerror(errno);
+			THROW_HW_ERROR(Error) << "Read from server error : " << strerror(errno);
+		}
+		bytes_received += bytes;
+	}
+	DEB_TRACE() << "bytes_received = " << bytes_received;	
+	DEB_TRACE() << "read header from server [END]";
 
-    while (read(m_skt, data_chain, 3*sizeof(uint32_t)) < 0);
-
+	//hmmm ?
     data_size = data_chain[3]<<24|data_chain[2]<<16|data_chain[1]<<8|data_chain[0];
     line_final_image = data_chain[7]<<24|data_chain[6]<<16|data_chain[5]<<8|data_chain[4];
     column_final_image = data_chain[11]<<24|data_chain[10]<<16|data_chain[9]<<8|data_chain[8];
 
-    //DEB_TRACE() << data_size << " " << line_final_image << " " << column_final_image;
+    DEB_TRACE() << "data_size = " << data_size; 
+    DEB_TRACE() << "line_final_image = " << line_final_image;
+    DEB_TRACE() << "column_final_image = " << column_final_image;
+    DEB_TRACE() << "data_chain[0] = " << data_chain[0];
 
     if(data_size > 0 && data_chain[0] != '*'){
 
         unsigned char *data = new unsigned char[data_size];
         data_buff = new int32_t[line_final_image*column_final_image ];
+		DEB_TRACE() << "read data from server [BEGIN]";
+		bytes_received = 0;	
+		bytes = 0;
+		while(bytes_received < data_size){
+			bytes = read(m_skt, data + bytes_received, data_size - bytes_received);
+			if(bytes < 0){
+				DEB_TRACE() << "Read data from server error : " << strerror(errno);
+				THROW_HW_ERROR(Error) << "Read data from server error : " << strerror(errno);
+			}
+			bytes_received += bytes;
+		}
+		DEB_TRACE() << "bytes_received = " << bytes_received;		
+		DEB_TRACE() << "read data from server [END]";		
 
-        ssize_t bytes;
-        while(bytes_received < data_size){
-            while ((bytes = read(m_skt, data+bytes_received, data_size-bytes_received)) < 0);
-            bytes_received += bytes;
-            //cout << "\tReceived " << bytes_received << " out of " << data_size << " Bytes" << endl;
-        }
-
-        //stringstream message;
-        //message << "Image received\n";
-        //string tmp = message.str();
-        //write(m_skt,(char *)tmp.c_str(),tmp.length());
         write(m_skt,"\n",sizeof(char));
 
         uint32_t count = 0;
