@@ -142,7 +142,7 @@ public:
         } ;
     } ;
 
-    Camera(std::string hostname, int port);
+    Camera(std::string hostname, int port, unsigned int moduleMask = 0);
     ~Camera();
 
     int init();

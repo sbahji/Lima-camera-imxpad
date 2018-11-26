@@ -76,10 +76,15 @@ private:
 // @brief  Ctor
 //---------------------------m_npixels
 
-Camera::Camera(string hostname, int port) : m_host_name(hostname), m_port(port)
+Camera::Camera(string hostname, int port, unsigned int moduleMask) : m_host_name(hostname), m_port(port)
 {
 	DEB_CONSTRUCTOR();
 
+	//use module mask to enable/disable some modules. 
+	//Do not apply if 0, in order to keep compatibility with others versions
+	if(moduleMask!=0)
+		m_module_mask = moduleMask;
+	
 	m_acq_thread = new AcqThread(*this);
 	m_acq_thread->start();
 
@@ -152,7 +157,11 @@ int Camera::init()
 		throw LIMA_HW_EXC(Error, "xpadInit FAILED!");
 
 	DEB_TRACE() << "********** Outside of Camera::init ***********";
-
+	
+	//use module mask to enable/disable some modules. 
+	//Do not apply if 0, in order to keep compatibility with others versions
+	if(m_module_mask!=0)
+		setModuleMask(m_module_mask);
 	return ret;
 }
 
@@ -1098,7 +1107,7 @@ void Camera::getModuleNumber()
 void Camera::getChipMask()
 {
 	DEB_MEMBER_FUNCT();
-	DEB_TRACE() << "********** Inside of Camera::getModuleMask ***********";
+	DEB_TRACE() << "********** Inside of Camera::getChipMask ***********";
 
 	int ret;
 	stringstream cmd;
@@ -1109,13 +1118,13 @@ void Camera::getChipMask()
 
 	m_chip_mask = ret;
 
-	DEB_TRACE() << "********** Outside of Camera::getModuleMask ***********";
+	DEB_TRACE() << "********** Outside of Camera::getChipMask ***********";
 }
 
 void Camera::getChipNumber()
 {
 	DEB_MEMBER_FUNCT();
-	DEB_TRACE() << "********** Inside of Camera::getModuleMask ***********";
+	DEB_TRACE() << "********** Inside of Camera::getChipNumber ***********";
 
 	int ret;
 	stringstream cmd;
@@ -1126,7 +1135,7 @@ void Camera::getChipNumber()
 
 	m_chip_number = ret;
 
-	DEB_TRACE() << "********** Outside of Camera::getModuleMask ***********";
+	DEB_TRACE() << "********** Outside of Camera::getChipNumber ***********";
 }
 
 int Camera::askReady()
