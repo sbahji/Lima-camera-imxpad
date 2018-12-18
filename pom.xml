@@ -10,7 +10,7 @@
 
     <groupId>fr.soleil.lib.Lima.Camera</groupId>
     <artifactId>LimaImXpad-${aol}-shared-${mode}</artifactId>
-    <version>1.0.7</version>
+    <version>1.0.8</version>
 	
     <packaging>nar</packaging>
     <name>LimaImXpad</name>
