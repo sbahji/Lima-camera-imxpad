@@ -10,7 +10,7 @@
 
     <groupId>fr.soleil.lib.Lima.Camera</groupId>
     <artifactId>LimaImXpad-${aol}-shared-${mode}</artifactId>
-    <version>1.0.9</version>
+    <version>1.0.10</version>
 	
     <packaging>nar</packaging>
     <name>LimaImXpad</name>
@@ -26,9 +26,9 @@
         <dependency>
             <groupId>fr.soleil.lib</groupId>
             <artifactId>LimaCore-${aol}-shared-${mode}</artifactId>
-            <version>1.7.8</version></dependency>
-        
-        
+            <version>1.7.9</version>
+        </dependency>
+
         <dependency>
             <groupId>ncsa.uiuc.edu</groupId>
             <artifactId>HDF5-${aol}-shared-release</artifactId>
