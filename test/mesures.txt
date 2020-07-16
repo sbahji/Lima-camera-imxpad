@@ -1,0 +1,70 @@
+depuis xpad_daq sur pcxpad4
+> GetDetectorStatus
+> SetExposureParameters 1 1000000 5000 4000 0 0 0 0 1 1 0 1 /opt/imXPAD/tmp_corrected/
+> GetImageSize
+> StartExposure
+Time to set exposure conditions [s]: 0.0104361
+Time to call asynchronous acquisition [s]: 7.29561e-05
+LibXpadUSB :    Start expose
+LibXpadUSB : exposeWriteFileAs()        Expose finish !!!!
+Mean time to get one image from disk [s]: 0.00158787
+Mean time to process and transfer one image [s]: 0.0039711
+Total time to process and transfer all images [s]: 1.07395
+Total time for command StartExposure [s]: 1.08447
+
+depuis device sur labodt-el6-1
+> GetDetectorStatus
+> GetDetectorStatus
+> GetDetectorStatus
+> SetExposureParameters 1 1000000 5000 4000 0 0 0 0 1 1 0 1 /opt/imXPAD/tmp_corrected/
+> GetImageSize
+> StartExposure
+Time to set exposure conditions [s]: 0.0115061
+Time to call asynchronous acquisition [s]: 9.48906e-05
+LibXpadUSB :    Start expose
+LibXpadUSB : exposeWriteFileAs()        Expose finish !!!!
+Mean time to get one image from disk [s]: 0.00157595
+Mean time to process and transfer one image [s]: 0.121106
+Total time to process and transfer all images [s]: 1.19266
+Total time for command StartExposure [s]: 1.20428
+
+depuis xpad_daq sur dev-el7-1
+> GetDetectorStatus
+> SetExposureParameters 1 1000000 5000 4000 0 0 1 0 1 1 0 1 /opt/imXPAD/tmp_corrected/
+> GetImageSize
+> StartExposure
+Time to set exposure conditions [s]: 0.0112681
+Time to call asynchronous acquisition [s]: 9.799e-05
+LibXpadUSB :    Start expose
+LibXpadUSB : exposeWriteFileAs()        Expose finish !!!!
+Mean time to get one image from disk [s]: 0.00189805
+Mean time to process and transfer one image [s]: 0.00915694
+Total time to process and transfer all images [s]: 1.07977
+Total time for command StartExposure [s]: 1.09115
+
+device sur labodt-el6-1 (5 sec)
+> SetExposureParameters 1 5000000 5000 4000 0 0 0 0 1 1 0 1 /opt/imXPAD/tmp_corrected/
+> GetImageSize
+> StartExposure
+Time to set exposure conditions [s]: 0.011539
+Time to call asynchronous acquisition [s]: 9.60827e-05
+LibXpadUSB :    Start expose
+LibXpadUSB : exposeWriteFileAs()        Expose finish !!!!
+Mean time to get one image from disk [s]: 0.00110698
+Mean time to process and transfer one image [s]: 0.0276809
+Total time to process and transfer all images [s]: 5.29723
+Total time for command StartExposure [s]: 5.30888
+
+xpad_daq sur dev-el7-1 (5 sec)
+> SetExposureParameters 1 5000000 5000 4000 0 0 1 0 1 1 0 1 /opt/imXPAD/tmp_corrected/
+> GetImageSize
+> StartExposure
+Time to set exposure conditions [s]: 0.012861
+Time to call asynchronous acquisition [s]: 8.89301e-05
+LibXpadUSB :    Start expose
+LibXpadUSB : exposeWriteFileAs()        Expose finish !!!!
+Mean time to get one image from disk [s]: 0.00152016
+Mean time to process and transfer one image [s]: 0.00992799
+Total time to process and transfer all images [s]: 5.28008
+Total time for command StartExposure [s]: 5.29305
+
