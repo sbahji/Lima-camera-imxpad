@@ -34,6 +34,13 @@ int main(int argc, char *argv[])
 		//read args of main 
 		switch (argc)
 		{   
+            case 2:
+			{
+				std::istringstream arg_hostname(argv[1]);
+				arg_hostname >> hostname;
+			}
+			break;
+            
 			case 3:
 			{
 				std::istringstream arg_hostname(argv[1]);
@@ -85,32 +92,34 @@ int main(int argc, char *argv[])
 
         lima::CtControl::Status ct_status;
         lima::imXpad::Camera::XpadStatus xpad_status;
-        clock_t start,end;
+        struct timeval _start_time;
+        struct timeval now;
         std::string dummy;
 
         while (1)
         {
             //GetDetectorStatus, GetDetectorType','GetDetectorModel', 'GetModuleMask', 'GetModuleNumber
-            std::cout << "############################################" << std::endl;
+            std::cout << "########################################################################################################" << std::endl;
             usleep(10000); //- sleep 10 ms
+            std::cout << "Wait 10 ms" << std::endl;
 
             std::cout << "--------------------------------------------" << std::endl;
-            start = clock();
-            my_control.getStatus(ct_status);
-            end = clock();
-	        std::cout << "Ctcontrol.getStatus : Elapsed time  = " << (end - start) / 1000 << " (ms)" << std::endl;
+            gettimeofday(&_start_time, NULL); 
+            my_control.getStatus(ct_status);            
+            gettimeofday(&now, NULL);
+	        std::cout << "Ctcontrol.getStatus : Elapsed time  = " << 1e3 * (now.tv_sec - _start_time.tv_sec) + 1e-3 * (now.tv_usec - _start_time.tv_usec) << " (ms)" << std::endl;
 
-            std::cout << "--------------------------------------------" << std::endl;
-            start = clock();
-            my_camera.getStatus(xpad_status);
-            end = clock();
-	        std::cout << "imXpad::Camera.getStatus : Elapsed time  = " << (end - start) / 1000 << " (ms)" << std::endl;
+            // std::cout << "--------------------------------------------" << std::endl;
+            // gettimeofday(&_start_time, NULL);             
+            // my_camera.getStatus(xpad_status);            
+            // gettimeofday(&now, NULL);
+	        // std::cout << "imXpad::Camera.getStatus : Elapsed time  = " << 1e3 * (now.tv_sec - _start_time.tv_sec) + 1e-3 * (now.tv_usec - _start_time.tv_usec) << " (ms)" << std::endl;
 
-            std::cout << "--------------------------------------------" << std::endl;
-            start = clock();
-            my_camera.getDetectorType(dummy);
-            end = clock();
-	        std::cout << "imXpad::Camera.getDetectorType : Elapsed time  = " << (end - start) / 1000 << " (ms)" << std::endl;
+            // std::cout << "--------------------------------------------" << std::endl;
+            // gettimeofday(&_start_time, NULL); 
+            // my_camera.getDetectorType(dummy);
+            // gettimeofday(&now, NULL);
+	        // std::cout << "imXpad::Camera.getDetectorType : Elapsed time  = " << 1e3 * (now.tv_sec - _start_time.tv_sec) + 1e-3 * (now.tv_usec - _start_time.tv_usec) << " (ms)" << std::endl << std::endl;
         }
 	}
 	catch (lima::Exception e)
