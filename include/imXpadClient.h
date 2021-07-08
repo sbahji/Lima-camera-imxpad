@@ -64,6 +64,7 @@ public:
 	std::string getErrorMessage() const;
 	std::vector<std::string> getDebugMessages() const;
     int getChar();
+    void sendWaitCustom(const std::string& cmd, std::string& value);
 
     int m_skt;							// socket for commands */
 

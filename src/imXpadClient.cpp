@@ -50,6 +50,7 @@
 #include "lima/ThreadUtils.h"
 #include "lima/Exceptions.h"
 #include "lima/Debug.h"
+#include <algorithm>
 
 //static char errorMessage[1024];
 
@@ -138,6 +139,28 @@ void XpadClient::sendWait(string cmd, string& value) {
     }
 }
 
+void XpadClient::sendWaitCustom(const string& cmd, string& value)
+{
+    DEB_MEMBER_FUNCT();
+    DEB_TRACE() << "sendCustomWait(" << cmd << ")";
+
+    if( send(m_skt , cmd.c_str() , strlen(cmd.c_str()) , 0) < 0)
+    {
+        THROW_HW_ERROR(Error) << "Send command to server failed.";
+    }
+
+    if( recv(m_skt , m_rd_buff , RD_BUFF , 0) < 0)
+    {
+       THROW_HW_ERROR(Error) << "Receive from server failed.";
+    }
+
+    value = m_rd_buff;
+    std::string special_chars("\"*> ");
+    for(int i = 0; i < special_chars.length(); ++i)
+    {
+        value.erase(std::remove(value.begin(), value.end(), special_chars[i]), value.end());
+    }
+}
 
 void XpadClient::sendNoWait(string cmd) {
     DEB_MEMBER_FUNCT();
