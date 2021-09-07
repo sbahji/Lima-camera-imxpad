@@ -26,12 +26,19 @@
 			   <sourceDirectory>src</sourceDirectory>
 			   <includePaths>
 				   <includePath>src</includePath>
+                    <includePath>/home/informatique/ica/di-franco/Lima/camera/imxpad/include</includePath>
 			   </includePaths>
-			   <defines>
-					<define>USE_GIGE</define>	<!-- Needed By Basler -->
-						
-				</defines>
 		   </cpp>
+
+            <linker>
+                <libs>
+                    <lib>
+                        <name>LimaImXpad-i386-Linux-gcc-shared-release-1.0.11</name>
+                        <type>shared</type>
+                        <directory>/home/informatique/ica/langlois/Lima/camera/imxpad/test/soleil/</directory>
+                    </lib>
+                </libs>
+            </linker>
 		</configuration>
 	  </plugin>		
 	</plugins>
@@ -41,13 +48,13 @@
 		<dependency>
 			<groupId>fr.soleil.lib</groupId>
 			<artifactId>LimaCore-${aol}-shared-${mode}</artifactId>
-			<version>1.7.9</version>
+			<version>1.7.10</version>
 		</dependency>
-		<dependency>
+		<!--<dependency>
 			<groupId>fr.soleil.lib.Lima.Camera</groupId>
 			<artifactId>LimaImXpad-${aol}-shared-${mode}</artifactId>
-			<version>1.0.10</version>
-		</dependency>
+			<version>1.0.11</version>
+		</dependency>-->
     </dependencies>
  
    <developers>
