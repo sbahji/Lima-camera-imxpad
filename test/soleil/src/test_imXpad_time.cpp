@@ -4,21 +4,39 @@
 #include <fstream>
 #include <istream>
 #include <string>
+#include <vector>
+#include <exception>
+
 #include <time.h> // clock, usleep
-
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/time.h>
+#include <sys/select.h>
+#include <netinet/tcp.h>
+#include <netdb.h>
+#include <cstring>
+#include <errno.h>
 
-//- LIMA
-#include <lima/HwInterface.h>
-#include <lima/CtControl.h>
-#include <lima/CtAcquisition.h>
-#include <lima/CtVideo.h>
-#include <lima/CtImage.h>
-#include <imXpadInterface.h>
-#include <imXpadCamera.h>
 
+
+const int RD_BUFF = 1000;
+bool g_valid;						// true if connected
+struct sockaddr_in g_remote_addr;	// address of remote server */
+int g_data_port;					// our data port
+int g_data_listen_skt;				// data socket we listen on
+int g_prompts;						// counts # of prompts received
+int g_nug_read, g_cur_pos;
+char g_rd_buff[RD_BUFF];
+int g_just_read;
+std::string g_errorMessage;
+std::vector<std::string> g_debugMessages;
+int g_skt;
 
 void send_cmd(const std::string cmd);
+int connect_to_server(const std::string hostname, int port);
+void disconnect_from_server();
+int receive_from_server();
 
 //--------------------------------------------------------------------------------------
 // test main:
@@ -90,7 +108,7 @@ int main(int argc, char *argv[])
 
 			default:
 			{
-                std::cout << "Error passing parameters: default values used" << std::endl;
+                std::cerr << "Error passing parameters: default values used" << std::endl;
 			}
 			break;
 		}
@@ -102,25 +120,16 @@ int main(int argc, char *argv[])
 		std::cout << "module_mask   = " << module_mask << std::endl;
 		std::cout << "============================================" << std::endl;
 
-		//initialize imXpad::Camera objects & Lima Objects
-		std::cout << "Creating Camera Object..." << std::endl;
-		lima::imXpad::Camera my_camera(hostname, port, module_mask);
+		if( 0 > connect_to_server(hostname, port) )
+		{
+			std::cerr << g_errorMessage << std::endl;
+		}
 
-		std::cout << "Creating Interface Object..." << std::endl;
-		lima::imXpad::Interface my_interface(my_camera);
 
-		std::cout << "Creating CtControl Object..." << std::endl;
-		lima::CtControl my_control(&my_interface);
-
-		std::cout << "============================================" << std::endl;
-
-        lima::CtControl::Status ct_status;
-        lima::imXpad::Camera::XpadStatus xpad_status;
         struct timeval _start_time;
         struct timeval now;
 
         struct timeval interval_begin, interval_end;
-        std::string dummy;
 
         //SetExposureParameters
         unsigned int exposure_time(10000000); //µs
@@ -170,25 +179,25 @@ int main(int argc, char *argv[])
             std::cout << "--------------------------------------------" << std::endl;
             gettimeofday(&_start_time, NULL); 
             send_cmd(start_cmd.str());
+            receive_from_server();
             gettimeofday(&now, NULL);
-	        std::cout << "Ctcontrol.getStatus : Elapsed time  = " << 1e3 * (now.tv_sec - _start_time.tv_sec) + 1e-3 * (now.tv_usec - _start_time.tv_usec) << " (ms)" << std::endl;
-
-	        my_camera.getStatus(xpad_status);
+	        std::cout << "Acquisition : Elapsed time  = "
+	        		<< 1e3 * (now.tv_sec - _start_time.tv_sec) + 1e-3 * (now.tv_usec - _start_time.tv_usec)
+					<< " (ms)" << std::endl;
 
 	        gettimeofday(&interval_begin, NULL);
 
-	        while(lima::imXpad::Camera::XpadStatus::XpadState::Idle != xpad_status.state)
-	        {
-	        	std::cout << "Wait end acquisition !!!" << std::endl;
-	        	my_camera.getStatus(xpad_status);
-	        }
 	        gettimeofday(&interval_end, NULL);
+	        std::cout << "Interval : Elapsed time  = "
+	        		<< 1e3 * (interval_end.tv_sec - interval_begin.tv_sec) + 1e-3 * (interval_end.tv_usec - interval_begin.tv_usec)
+	        		<< " (ms)" << std::endl;
 	        ++current_frame;
         }
+        disconnect_from_server();
 	}
-	catch (lima::Exception e)
+	catch (std::exception& e)
 	{
-		std::cerr << "LIMA Error : " << e << std::endl;
+		std::cerr << e.what() << std::endl;
 	}
     catch (...)
 	{
@@ -199,7 +208,75 @@ int main(int argc, char *argv[])
 }
 //--------------------------------------------------------------------------------------
 
+int connect_to_server(const std::string hostName, int port)
+{
+    struct hostent *host;
+    struct protoent *protocol;
+    int opt;
+    int rc = 0;
 
+    if (g_valid)
+    {
+        g_errorMessage = "Already connected to server";
+        return -1;
+    }
+    if ((host = gethostbyname(hostName.c_str())) == 0)
+    {
+        g_errorMessage = "can't get gethostbyname";
+        endhostent();
+        return -1;
+    }
+    if ((g_skt = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    {
+        g_errorMessage = "can't create socket";
+        endhostent();
+        return -1;
+    }
+    g_remote_addr.sin_family = host->h_addrtype;
+    g_remote_addr.sin_port = htons (port);
+    size_t len = host->h_length;
+    memcpy(&g_remote_addr.sin_addr.s_addr, host->h_addr, len);
+    endhostent();
+    if (connect(g_skt, (struct sockaddr *) &g_remote_addr, sizeof(struct sockaddr_in)) == -1)
+    {
+        close(g_skt);
+        g_errorMessage = "Connection to server refused. Is the server running?";
+        return -1;
+    }
+    protocol = getprotobyname("tcp");
+    if (protocol == 0)
+    {
+        g_errorMessage = "Cannot get protocol TCP\n";
+        rc = -1;
+    }
+    else
+    {
+        opt = 1;
+        if (setsockopt(g_skt, protocol->p_proto, TCP_NODELAY, (char *) &opt, 4) < 0)
+        {
+            g_errorMessage = "Cannot Set socket options";
+            rc = -1;
+        }
+    }
+    endprotoent();
+    g_valid = 1;
+    g_data_port = -1;
+    g_data_listen_skt = -1;
+    g_prompts = 0;
+    g_nug_read = 0;
+    g_cur_pos = 0;
+    return rc;
+}
+
+void disconnect_from_server()
+{
+    if (g_valid)
+    {
+        shutdown(g_skt, 2);
+        close(g_skt);
+        g_valid = 0;
+    }
+}
 
 
 
@@ -217,6 +294,19 @@ void send_cmd(const std::string cmd)
 
 	if (r <= 0)
 	{
-		std::cerr << "Sending command " << cmd << " to server failed";
+		std::cerr << "Sending command " << cmd << " to server failed" << std::endl;
 	}
+}
+
+int receive_from_server()
+{
+	int r;
+	char tmp;
+	r = recv(g_skt, &tmp, 1, MSG_PEEK | MSG_DONTWAIT);
+	if (r == 0 || (r < 0 && errno != EWOULDBLOCK))
+	{
+		std::cerr << "Connection broken, r = " << r << " errno = " << errno << std::endl;
+		return -1;
+	}
+	return 0;
 }
