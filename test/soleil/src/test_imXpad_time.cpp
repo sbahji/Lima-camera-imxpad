@@ -7,6 +7,7 @@
 #include <vector>
 #include <exception>
 
+//- System headers
 #include <time.h> // clock, usleep
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -17,6 +18,15 @@
 #include <netdb.h>
 #include <cstring>
 #include <errno.h>
+
+//- LIMA
+#include <lima/HwInterface.h>
+#include <lima/CtControl.h>
+#include <lima/CtAcquisition.h>
+#include <lima/CtVideo.h>
+#include <lima/CtImage.h>
+#include <imXpadInterface.h>
+#include <imXpadCamera.h>
 
 
 
@@ -33,10 +43,17 @@ std::string g_errorMessage;
 std::vector<std::string> g_debugMessages;
 int g_skt;
 
+std::string g_hostname    = "cegitek";
+int g_port                = 3456;
+unsigned int g_module_mask = 0;
+unsigned int g_nb_frames(2);
+
 void send_cmd(const std::string cmd);
 int connect_to_server(const std::string hostname, int port);
 void disconnect_from_server();
 int receive_from_server();
+void hardware_without_lima();
+void hardware_with_lima();
 
 //--------------------------------------------------------------------------------------
 // test main:
@@ -48,14 +65,10 @@ int receive_from_server();
 int main(int argc, char *argv[])
 {
 	std::cout << "============================================" << std::endl;
-	std::cout << "Usage :./ds_TestLimaImXpad hostname port [moduleMask] nbFrames " << std::endl << std::endl;
+	std::cout << "Usage :./ds_TestLimaImXpad hostname port [moduleMask]" << std::endl << std::endl;
 
 	try
 	{
-        std::string hostname    = "cegitek";
-        int port                = 3456;
-        unsigned int module_mask = 0;
-        unsigned int nb_frames(2);
 
 		//read args of main 
 		switch (argc)
@@ -63,48 +76,48 @@ int main(int argc, char *argv[])
             case 2:
 			{
 				std::istringstream arg_hostname(argv[1]);
-				arg_hostname >> hostname;
+				arg_hostname >> g_hostname;
 			}
 			break;
             
 			case 3:
 			{
 				std::istringstream arg_hostname(argv[1]);
-				arg_hostname >> hostname;
+				arg_hostname >> g_hostname;
 
 				std::istringstream arg_port(argv[2]);
-				arg_port >> port;
+				arg_port >> g_port;
 			}
 			break;
 
 			case 4:
 			{
 				std::istringstream arg_hostname(argv[1]);
-				arg_hostname >> hostname;
+				arg_hostname >> g_hostname;
 
 				std::istringstream arg_port(argv[2]);
-				arg_port >> port;
+				arg_port >> g_port;
 
 				std::istringstream arg_module_mask(argv[3]);
-				arg_module_mask >> module_mask;
+				arg_module_mask >> g_module_mask;
 			}
 			break;
 
-			case 5:
-			{
-				std::istringstream arg_hostname(argv[1]);
-				arg_hostname >> hostname;
-
-				std::istringstream arg_port(argv[2]);
-				arg_port >> port;
-
-				std::istringstream arg_module_mask(argv[3]);
-				arg_module_mask >> module_mask;
-
-				std::istringstream arg_nb_frames(argv[4]);
-				arg_nb_frames >> nb_frames;
-			}
-			break;
+//			case 5:
+//			{
+//				std::istringstream arg_hostname(argv[1]);
+//				arg_hostname >> g_hostname;
+//
+//				std::istringstream arg_port(argv[2]);
+//				arg_port >> g_port;
+//
+//				std::istringstream arg_module_mask(argv[3]);
+//				arg_module_mask >> g_module_mask;
+//
+//				std::istringstream arg_nb_frames(argv[4]);
+//				arg_nb_frames >> g_nb_frames;
+//			}
+//			break;
 
 			default:
 			{
@@ -115,85 +128,23 @@ int main(int argc, char *argv[])
 
 		//        
 		std::cout << "============================================" << std::endl;
-		std::cout << "hostname      = " << hostname << std::endl;
-		std::cout << "port          = " << port << std::endl;
-		std::cout << "module_mask   = " << module_mask << std::endl;
+		std::cout << "hostname      = " << g_hostname << std::endl;
+		std::cout << "port          = " << g_port << std::endl;
+		std::cout << "module_mask   = " << g_module_mask << std::endl;
 		std::cout << "============================================" << std::endl;
 
-		if( 0 > connect_to_server(hostname, port) )
-		{
-			std::cerr << g_errorMessage << std::endl;
-		}
+
+//		std::cout << "Start exposure, send cmd to server" << std::endl;
+//
+//		hardware_without_lima();
+
+//		sleep(10); //- sleep 10s
+//		std::cout << "Wait 80 ms" << std::endl;
+
+		std::cout << "Snap from Lima to server" << std::endl;
+		hardware_with_lima();
 
 
-        struct timeval _start_time;
-        struct timeval now;
-
-        struct timeval interval_begin, interval_end;
-
-        //SetExposureParameters
-        unsigned int exposure_time(10000000); //µs
-        unsigned int latency_time(0);//µs
-        unsigned int overflow_time(4000); //µs
-        unsigned short trigger_mode(0);
-        unsigned short output_mode(0);
-        bool  geometrical_correction_flag(false);
-        bool flat_field_correction_flag(false);
-        bool image_transfert_flag(true);
-        unsigned short output_format_file(0);
-        unsigned short acquisition_mode(0);
-        unsigned short image_stack(1);
-        const std::string& output_path("./files");
-
-        std::stringstream prepare_cmd;
-
-        prepare_cmd << "SetExposureParameters "
-        		<< nb_frames << " "
-				<< exposure_time << " "
-				<< latency_time << " "
-				<< overflow_time << " "
-				<< trigger_mode << " "
-				<< output_mode << " "
-				<< geometrical_correction_flag << " "
-				<< flat_field_correction_flag << " "
-				<< image_transfert_flag << " "
-				<< output_format_file << " "
-				<< acquisition_mode << " "
-				<< image_stack << " "
-				<< output_path;
-
-        send_cmd(prepare_cmd.str());
-
-        unsigned int current_frame(0);
-
-        std::stringstream start_cmd;
-        start_cmd << "StartExposure";
-
-        while ( nb_frames != current_frame)
-        {
-        	//StartExposure
-            std::cout << "########################################################################################################" << std::endl;
-            usleep(10000); //- sleep 10 ms
-            std::cout << "Wait 10 ms" << std::endl;
-
-            std::cout << "--------------------------------------------" << std::endl;
-            gettimeofday(&_start_time, NULL); 
-            send_cmd(start_cmd.str());
-            receive_from_server();
-            gettimeofday(&now, NULL);
-	        std::cout << "Acquisition : Elapsed time  = "
-	        		<< 1e3 * (now.tv_sec - _start_time.tv_sec) + 1e-3 * (now.tv_usec - _start_time.tv_usec)
-					<< " (ms)" << std::endl;
-
-	        gettimeofday(&interval_begin, NULL);
-
-	        gettimeofday(&interval_end, NULL);
-	        std::cout << "Interval : Elapsed time  = "
-	        		<< 1e3 * (interval_end.tv_sec - interval_begin.tv_sec) + 1e-3 * (interval_end.tv_usec - interval_begin.tv_usec)
-	        		<< " (ms)" << std::endl;
-	        ++current_frame;
-        }
-        disconnect_from_server();
 	}
 	catch (std::exception& e)
 	{
@@ -207,6 +158,175 @@ int main(int argc, char *argv[])
 	return 0;
 }
 //--------------------------------------------------------------------------------------
+
+void hardware_with_lima()
+{
+	//initialize imXpad::Camera objects & Lima Objects
+	std::cout << "============================================" << std::endl;
+	std::cout << "Creating Camera Object..." << std::endl;
+	lima::imXpad::Camera my_camera(g_hostname, g_port, g_module_mask);
+
+	std::cout << "Creating Interface Object..." << std::endl;
+	lima::imXpad::Interface my_interface(my_camera);
+
+	std::cout << "Creating CtControl Object..." << std::endl;
+	lima::CtControl my_control(&my_interface);
+
+	struct timeval _start_time;
+	struct timeval now;
+	struct timeval interval_begin, interval_end;
+	lima::CtControl::Status ct_status;
+	lima::imXpad::Camera::XpadStatus xpad_status;
+
+	my_control.getStatus(ct_status);
+
+	std::cout << "Get device status : " << ct_status << std::endl;
+
+	std::cout << "Wait 5s" << std::endl;
+	sleep(5); //- sleep 5s
+
+	std::cout << "--------------------------------------------" << std::endl;
+	std::cout << "Start snap 1 !!!" << std::endl;
+
+	std::cout << "Set exposure time" << std::endl;
+
+	my_control.acquisition()->setAcqExpoTime(1);
+
+	my_control.acquisition()->setAcqNbFrames(20);
+
+	//my_control.acquisition()->setLatencyTime(0);
+
+	gettimeofday(&_start_time, NULL);
+
+	std::cout << "Prepare acquisition 1 " << std::endl;
+
+	my_control.prepareAcq();
+
+	std::cout << "Start Lima acquisition 1 " << std::endl;
+
+	my_control.startAcq();
+
+	std::cout << "Wait acqusition's end ........." << std::endl;
+
+	while( my_camera.isAcqRunning() )
+	{
+
+	}
+
+	gettimeofday(&now, NULL);
+
+	std::cout << "Snap 1 (20 frames, 1 seconde : Elapsed time  = "
+			<< 1e3 * (now.tv_sec - _start_time.tv_sec) + 1e-3 * (now.tv_usec - _start_time.tv_usec)
+			<< " (ms)" << std::endl;
+
+	std::cout << "============================================" << std::endl;
+}
+
+
+void hardware_without_lima()
+{
+	if( 0 > connect_to_server(g_hostname, g_port) )
+	{
+		std::cerr << g_errorMessage << std::endl;
+	}
+
+
+	struct timeval _start_time;
+	struct timeval now;
+
+	struct timeval interval_begin, interval_end;
+
+	//SetExposureParameters
+	unsigned int exposure_time(5000000); //µs
+	unsigned int latency_time(0);//µs
+	unsigned int overflow_time(4000); //µs
+	unsigned short trigger_mode(0);
+	unsigned short output_mode(0);
+	bool  geometrical_correction_flag(false);
+	bool flat_field_correction_flag(false);
+	bool image_transfert_flag(true);
+	unsigned short output_format_file(0);
+	unsigned short acquisition_mode(0);
+	unsigned short image_stack(1);
+	const std::string& output_path(" ");
+
+	std::stringstream prepare_cmd;
+
+	prepare_cmd << "SetExposureParameters "
+			<< g_nb_frames << " "
+			<< exposure_time << " "
+			<< latency_time << " "
+			<< overflow_time << " "
+			<< trigger_mode << " "
+			<< output_mode << " "
+			<< geometrical_correction_flag << " "
+			<< flat_field_correction_flag << " "
+			<< image_transfert_flag << " "
+			<< output_format_file << " "
+			<< acquisition_mode << " "
+			<< image_stack << " "
+			<< output_path;
+
+	send_cmd(prepare_cmd.str());
+
+	unsigned int current_frame(0);
+
+	std::stringstream start_cmd;
+	start_cmd << "StartExposure";
+
+	//        while ( nb_frames != current_frame)
+	//        {
+	//        	//StartExposure
+	//            std::cout << "########################################################################################################" << std::endl;
+	//            usleep(10000); //- sleep 10 ms
+	//            std::cout << "Wait 10 ms" << std::endl;
+	//
+	//            std::cout << "--------------------------------------------" << std::endl;
+	//            gettimeofday(&_start_time, NULL);
+	//            send_cmd(start_cmd.str());
+	//            receive_from_server();
+	//            gettimeofday(&now, NULL);
+	//	        std::cout << "Acquisition : Elapsed time  = "
+	//	        		<< 1e3 * (now.tv_sec - _start_time.tv_sec) + 1e-3 * (now.tv_usec - _start_time.tv_usec)
+	//					<< " (ms)" << std::endl;
+	//
+	//	        gettimeofday(&interval_begin, NULL);
+	//
+	//	        gettimeofday(&interval_end, NULL);
+	//	        std::cout << "Interval : Elapsed time  = "
+	//	        		<< 1e3 * (interval_end.tv_sec - interval_begin.tv_sec) + 1e-3 * (interval_end.tv_usec - interval_begin.tv_usec)
+	//	        		<< " (ms)" << std::endl;
+	//	        ++current_frame;
+	//        }
+	std::cout << "--------------------------------------------" << std::endl;
+	gettimeofday(&_start_time, NULL);
+	send_cmd(start_cmd.str());
+	receive_from_server();
+	gettimeofday(&now, NULL);
+	std::cout << "Acquisition : Elapsed time  = "
+			<< 1e3 * (now.tv_sec - _start_time.tv_sec) + 1e-3 * (now.tv_usec - _start_time.tv_usec)
+			<< " (ms)" << std::endl;
+
+	gettimeofday(&interval_begin, NULL);
+
+	std::cout << "--------------------------------------------" << std::endl;
+	gettimeofday(&_start_time, NULL);
+	send_cmd(start_cmd.str());
+
+	gettimeofday(&interval_end, NULL);
+	std::cout << "Interval : Elapsed time  = "
+			<< 1e3 * (interval_end.tv_sec - interval_begin.tv_sec) + 1e-3 * (interval_end.tv_usec - interval_begin.tv_usec)
+			<< " (ms)" << std::endl;
+
+	receive_from_server();
+	gettimeofday(&now, NULL);
+	std::cout << "Acquisition : Elapsed time  = "
+			<< 1e3 * (now.tv_sec - _start_time.tv_sec) + 1e-3 * (now.tv_usec - _start_time.tv_usec)
+			<< " (ms)" << std::endl;
+
+	disconnect_from_server();
+}
+
 
 int connect_to_server(const std::string hostName, int port)
 {
@@ -284,12 +404,12 @@ void send_cmd(const std::string cmd)
 {
 	int r, len;
 	char *p;
-	int skt;
+
 	std::string command = cmd + "\n";
 
 	len = command.length();
 	p = (char*) command.c_str();
-	while (len > 0 && (r = send(skt, p, len, 0)) > 0)
+	while (len > 0 && (r = send(g_skt, p, len, 0)) > 0)
 		p += r, len -= r;
 
 	if (r <= 0)
