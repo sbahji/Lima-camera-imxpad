@@ -103,8 +103,10 @@ Camera::Camera(string hostname, int port, unsigned int moduleMask) : m_host_name
 	string xpad_type, xpad_model;
 
 	init();
-	getDetectorType(xpad_type);
-	getDetectorModel(xpad_model);
+	getDetectorTypeFromHardware(xpad_type);
+	m_xpad_type = xpad_type;
+	getDetectorModelFromHardware(xpad_model);
+	m_xpad_model = xpad_model;
 	getModuleMask();
 	getChipMask();
 	getModuleNumber();
@@ -124,6 +126,8 @@ Camera::Camera(string hostname, int port, unsigned int moduleMask) : m_host_name
 	setStackImages(1);
 	setWaitAcqEndTime(10000);
 	getBurstNumber();
+
+
 }
 
 Camera::~Camera()
@@ -836,6 +840,11 @@ void Camera::setImageType(ImageType pixel_depth)
 
 void Camera::getDetectorType(std::string& type)
 {
+	type = m_xpad_type;
+}
+
+void Camera::getDetectorTypeFromHardware(std::string& type)
+{
 	DEB_MEMBER_FUNCT();
 	CHECK_DETECTOR_ACCESS
 	string message;
@@ -849,6 +858,11 @@ void Camera::getDetectorType(std::string& type)
 }
 
 void Camera::getDetectorModel(std::string& model)
+{
+	model = m_xpad_model;
+}
+
+void Camera::getDetectorModelFromHardware(std::string& model)
 {
 	DEB_MEMBER_FUNCT();
 	CHECK_DETECTOR_ACCESS
