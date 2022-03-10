@@ -432,6 +432,7 @@ private:
     int                     m_chip_number;
     int                     m_burst_number;
     unsigned int            m_stack_images;
+    std::string				m_image_size_from_hardware;
 
 
     // Buffer control object
