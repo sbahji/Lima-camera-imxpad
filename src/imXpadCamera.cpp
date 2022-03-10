@@ -103,8 +103,10 @@ Camera::Camera(string hostname, int port, unsigned int moduleMask) : m_host_name
 	string xpad_type, xpad_model;
 
 	init();
-	getDetectorType(xpad_type);
-	getDetectorModel(xpad_model);
+	getDetectorTypeFromHardware(xpad_type);
+	m_xpad_type = xpad_type;
+	getDetectorModelFromHardware(xpad_model);
+	m_xpad_model = xpad_model;
 	getModuleMask();
 	getChipMask();
 	getModuleNumber();
@@ -124,6 +126,8 @@ Camera::Camera(string hostname, int port, unsigned int moduleMask) : m_host_name
 	setStackImages(1);
 	setWaitAcqEndTime(10000);
 	getBurstNumber();
+
+
 }
 
 Camera::~Camera()
@@ -777,17 +781,21 @@ void Camera::getImageSize(Size& size)
 {
 
 	DEB_MEMBER_FUNCT();
-	CHECK_DETECTOR_ACCESS
-	string message, ret;
+	string message;
 	stringstream cmd;
 
-	cmd.str(string());
-	cmd << "GetImageSize";
-	m_xpad->sendWait(cmd.str(), ret);
-	int pos = ret.find("x");
+	if( m_image_size_from_hardware.empty() )
+	{
+		CHECK_DETECTOR_ACCESS
+		cmd.str(string());
+		cmd << "GetImageSize";
+		m_xpad->sendWait(cmd.str(), m_image_size_from_hardware);
+	}
 
-	int row = atoi(ret.substr(0, pos).c_str());
-	int columns = atoi(ret.substr(pos + 1, ret.length() - pos + 1).c_str());
+	int pos = m_image_size_from_hardware.find("x");
+
+	int row = atoi(m_image_size_from_hardware.substr(0, pos).c_str());
+	int columns = atoi(m_image_size_from_hardware.substr(pos + 1, m_image_size_from_hardware.length() - pos + 1).c_str());
 
 	size = Size(columns, row);
 }
@@ -836,6 +844,11 @@ void Camera::setImageType(ImageType pixel_depth)
 
 void Camera::getDetectorType(std::string& type)
 {
+	type = m_xpad_type;
+}
+
+void Camera::getDetectorTypeFromHardware(std::string& type)
+{
 	DEB_MEMBER_FUNCT();
 	CHECK_DETECTOR_ACCESS
 	string message;
@@ -849,6 +862,11 @@ void Camera::getDetectorType(std::string& type)
 }
 
 void Camera::getDetectorModel(std::string& model)
+{
+	model = m_xpad_model;
+}
+
+void Camera::getDetectorModelFromHardware(std::string& model)
 {
 	DEB_MEMBER_FUNCT();
 	CHECK_DETECTOR_ACCESS
