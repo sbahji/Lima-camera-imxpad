@@ -253,19 +253,27 @@ void Camera::startAcq()
 	DEB_MEMBER_FUNCT();
 	DEB_TRACE() << "********** Inside of Camera::startAcq ***********";
 
-	waitAcqEnd();
+	if(0 < m_nb_frames)
+	{
+		waitAcqEnd();
 
-	m_acq_frame_nb = 0;
-	StdBufferCbMgr& buffer_mgr = m_buffer_ctrl_obj.getBuffer();
-	buffer_mgr.setStartTimestamp(Timestamp::now());
+		m_acq_frame_nb = 0;
+		StdBufferCbMgr& buffer_mgr = m_buffer_ctrl_obj.getBuffer();
+		buffer_mgr.setStartTimestamp(Timestamp::now());
 
-	m_wait_flag = false;
-	m_quit = false;
-	m_process_id = 0;
-	m_cond.broadcast();
+		m_wait_flag = false;
+		m_quit = false;
+		m_process_id = 0;
+		m_cond.broadcast();
 
-	while (!m_thread_running)
-		m_cond.wait();
+		while (!m_thread_running)
+			m_cond.wait();
+	}
+	else
+	{
+		DEB_ERROR() << "Error: Live video not supported !!!";
+		throw LIMA_HW_EXC(Error, "Live video not supported !!!");
+	}
 
 	DEB_TRACE() << "********** Outside of Camera::startAcq ***********";
 }
