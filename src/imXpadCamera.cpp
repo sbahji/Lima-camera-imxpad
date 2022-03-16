@@ -111,7 +111,7 @@ Camera::Camera(string hostname, int port, unsigned int moduleMask) : m_host_name
 	getChipMask();
 	getModuleNumber();
 	getChipNumber();
-	setImageType(Bpp32S);
+	setImageType(Bpp32);
 	setNbFrames(1);
 	setAcquisitionMode(0); //standard
 	setExpTime(1);
@@ -476,8 +476,8 @@ void Camera::AcqThread::threadFunction()
 
 						uint numData = m_cam.m_image_size.getWidth() * m_cam.m_image_size.getHeight();
 
-						int16_t *buffer_short;
-						int32_t *buffer_int;
+						uint16_t *buffer_short;
+						uint32_t *buffer_int;
 
 						while (continueFlag && (!m_cam.m_nb_frames || m_cam.m_acq_frame_nb < m_cam.m_nb_frames) && m_cam.m_quit == false)
 						{
@@ -485,9 +485,9 @@ void Camera::AcqThread::threadFunction()
 							void *bptr = buffer_mgr.getFrameBufferPtr(m_cam.m_acq_frame_nb);
 
 							if (m_cam.m_pixel_depth == Camera::B2)
-								buffer_short = (int16_t *) bptr;
+								buffer_short = (uint16_t *) bptr;
 							else
-								buffer_int = (int32_t *) bptr;
+								buffer_int = (uint32_t *) bptr;
 
 							stringstream fileName;
 
@@ -511,16 +511,16 @@ void Camera::AcqThread::threadFunction()
 								{
 
 									DEB_TRACE() << "OPEN FILE : " << (char *) buffer_int;
-									file.read((char *) buffer_int, numData * sizeof (int32_t));
+									file.read((char *) buffer_int, numData * sizeof (uint32_t));
 
 									if (m_cam.m_pixel_depth == Camera::B2)
 									{
 										uint32_t count = 0;
 										int i = 0;
-										while (count < numData * sizeof (int32_t))
+										while (count < numData * sizeof (uint32_t))
 										{
 											buffer_short[i] = (uint16_t) (buffer_int[i]);
-											count += sizeof (int32_t);
+											count += sizeof (uint32_t);
 											i++;
 										}
 									}
@@ -821,11 +821,11 @@ void Camera::getImageType(ImageType& pixel_depth)
 	switch ( m_pixel_depth )
 	{
 		case Camera::B2:
-			pixel_depth = Bpp16S;
+			pixel_depth = Bpp16;
 			break;
 
 		case Camera::B4:
-			pixel_depth = Bpp32S;
+			pixel_depth = Bpp32;
 			break;
 	}
 }
@@ -836,11 +836,11 @@ void Camera::setImageType(ImageType pixel_depth)
 	DEB_MEMBER_FUNCT();
 	switch ( pixel_depth )
 	{
-		case Bpp16S:
+		case Bpp16:
 			m_pixel_depth = B2;
 			break;
 
-		case Bpp32S:
+		case Bpp32:
 			m_pixel_depth = B4;
 			break;
 		default:
@@ -1220,10 +1220,10 @@ int Camera::digitalTest(unsigned short mode)
 	int rows = IMG_LINE * m_module_number;
 	int columns = IMG_COLUMN * m_chip_number;
 
-	int32_t buff[rows * columns];
+	uint32_t buff[rows * columns];
 	readFrameExpose(buff, 1);
 
-	int32_t val;
+	uint32_t val;
 	//Saving Digital Test image to disk
 	mkdir("./Images", S_IRWXU |  S_IRWXG |  S_IRWXO);
 	ofstream file("./DigitalTest.bin", ios::out | ios::binary);
@@ -1234,7 +1234,7 @@ int Camera::digitalTest(unsigned short mode)
 			for (int j = 0;j < columns;j++)
 			{
 				val = buff[i * columns + j];
-				file.write((char *) &val, sizeof (int32_t));
+				file.write((char *) &val, sizeof (uint32_t));
 			}
 		}
 	}
