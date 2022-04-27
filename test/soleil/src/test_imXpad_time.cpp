@@ -55,6 +55,7 @@ int g_just_read;
 std::string g_errorMessage;
 std::vector<std::string> g_debugMessages;
 int g_skt;
+char g_choice;
 
 const int MAX_ERRMSG = 1024;
 const int CR = '\15';				// carriage return
@@ -68,6 +69,7 @@ unsigned int g_nb_frames(20);
 float g_exposure_time(10);
 
 void send_cmd(const std::string cmd);
+void send_cmd_str(const std::string& str);
 int connect_to_server(const std::string hostname, int port);
 void disconnect_from_server();
 int receive_from_server();
@@ -77,7 +79,9 @@ int next_line(std::string *errmsg, int *ivalue, double *dvalue, std::string *sva
 
 int get_char();
 int wait_for_prompt();
-int wait_for_response();
+int wait_for_response(std::string& value);
+int wait_for_response(double& value);
+int wait_for_response(int& value);
 
 //--------------------------------------------------------------------------------------
 // test main:
@@ -127,7 +131,7 @@ int main(int argc, char *argv[])
 			}
 			break;
 
-			case 6:
+			case 7:
 			{
 				std::istringstream arg_hostname(argv[1]);
 				arg_hostname >> g_hostname;
@@ -143,6 +147,9 @@ int main(int argc, char *argv[])
 
 				std::istringstream arg_exposure_time(argv[5]);
 				arg_exposure_time >> g_exposure_time;
+
+				std::istringstream arg_choice(argv[6]);
+				arg_choice >> g_choice;
 			}
 			break;
 
@@ -173,18 +180,26 @@ int main(int argc, char *argv[])
 		}
 
 
-		std::cout << "Start exposure, send cmd to server" << std::endl;
 
-		hardware_without_lima();
 
+		if('l' == g_choice)
+		{
+			std::cout << "Start test with Lima" << std::endl;
+			hardware_with_lima();
+		}
+		else if('d' == g_choice)
+		{
+			std::cout << "Start test without Lima in direct access" << std::endl;
+			hardware_without_lima();
+		}
+		else
+		{
+			std::cerr << "Please, select access mode : (l) for Lima, and (d) for direct access" << std::endl;
+			disconnect_from_server();
+			exit(1);
+		}
+		sleep(5);
 		disconnect_from_server();
-
-//		sleep(10); //- sleep 10s
-//		std::cout << "Wait 80 ms" << std::endl;
-
-//		std::cout << "Snap from Lima to server" << std::endl;
-//		hardware_with_lima();
-
 
 	}
 	catch (std::exception& e)
@@ -209,7 +224,7 @@ void hardware_with_lima()
 
 	std::cout << "Creating Interface Object..." << std::endl;
 	lima::imXpad::Interface my_interface(my_camera);
-	my_camera.setImageType(lima::Bpp12);
+	my_camera.setImageType(lima::Bpp32S);
 
 	std::cout << "Creating CtControl Object..." << std::endl;
 	lima::CtControl my_control(&my_interface);
@@ -228,7 +243,7 @@ void hardware_with_lima()
 	sleep(5); //- sleep 5s
 
 	std::cout << "--------------------------------------------" << std::endl;
-	std::cout << "Start snap 1 !!!" << std::endl;
+	std::cout << "Start snap !!!" << std::endl;
 
 	std::cout << "Set exposure time" << std::endl;
 
@@ -240,11 +255,11 @@ void hardware_with_lima()
 
 	gettimeofday(&_start_time, NULL);
 
-	std::cout << "Prepare acquisition 1 " << std::endl;
+	std::cout << "Prepare acquisition" << std::endl;
 
 	my_control.prepareAcq();
 
-	std::cout << "Start Lima acquisition 1 " << std::endl;
+	std::cout << "Start Lima acquisition" << std::endl;
 
 	my_control.startAcq();
 
@@ -258,7 +273,7 @@ void hardware_with_lima()
 
 	gettimeofday(&now, NULL);
 
-	std::cout << "Snap 1 ( " << g_nb_frames <<" frames," << g_exposure_time <<" seconde : Elapsed time  = "
+	std::cout << "Snap = " << g_nb_frames <<" frames," << g_exposure_time <<" seconde : Elapsed time  = "
 			<< 1e3 * (now.tv_sec - _start_time.tv_sec) + 1e-3 * (now.tv_usec - _start_time.tv_usec)
 			<< " (ms)" << std::endl;
 
@@ -268,12 +283,20 @@ void hardware_with_lima()
 
 void hardware_without_lima()
 {
-//	if( 0 > connect_to_server(g_hostname, g_port) )
-//	{
-//		std::cerr << g_errorMessage << std::endl;
-//	}
+	std::clog << "hardware_without_lima" << std::endl;
 
+	send_cmd_str("Init");
 
+	std::stringstream module_mask_cmd;
+	module_mask_cmd << "SetModuleMask " << g_module_mask;
+
+	//send_cmd(module_mask_cmd.str());
+
+	sleep(5);
+
+	send_cmd_str("AskReady");
+
+	sleep(3);
 	struct timeval _start_time;
 	struct timeval now;
 
@@ -290,7 +313,7 @@ void hardware_without_lima()
 	unsigned short output_format_file(0);
 	unsigned short acquisition_mode(0);
 	unsigned short image_stack(1);
-	const std::string& output_path("");
+	const std::string& output_path("/home/cegitek/imXPAD/tmp_corrected/");
 
 	std::stringstream prepare_cmd;
 
@@ -310,23 +333,22 @@ void hardware_without_lima()
 			<< output_path;
 
 	send_cmd(prepare_cmd.str());
+	sleep(4);
 
-	unsigned int current_frame(0);
-
-	std::stringstream start_cmd;
-	start_cmd << "StartExposure";
 
 	std::cout << "--------------------------------------------" << std::endl;
 	gettimeofday(&_start_time, NULL);
-	send_cmd(start_cmd.str());
+	send_cmd_str("StartExposure");
+
+	int rc = 0;
 
 	do
 	{
-
-	}while(0 != wait_for_response());
+		rc = wait_for_prompt();
+	}while(0 != rc);
 	gettimeofday(&now, NULL);
 
-	std::cout << "Snap 1 ( " << g_nb_frames <<" frames," << g_exposure_time <<" seconde : Elapsed time  = "
+	std::cout << "Snap " << g_nb_frames <<" frames," << g_exposure_time <<" seconde : Elapsed time  = "
 			<< 1e3 * (now.tv_sec - _start_time.tv_sec) + 1e-3 * (now.tv_usec - _start_time.tv_usec)
 			<< " (ms)" << std::endl;
 }
@@ -406,6 +428,7 @@ void disconnect_from_server()
 
 void send_cmd(const std::string cmd)
 {
+	std::cout << "send_cmd : " << cmd << std::endl;;
 	int r, len;
 	char *p;
 
@@ -422,6 +445,13 @@ void send_cmd(const std::string cmd)
 	}
 }
 
+void send_cmd_str(const std::string& str)
+{
+	std::stringstream cmd;
+	cmd << str;
+	send_cmd(cmd.str());
+}
+
 int receive_from_server()
 {
 	int r;
@@ -432,6 +462,7 @@ int receive_from_server()
 		std::cerr << "Connection broken, r = " << r << " errno = " << errno << std::endl;
 		return -1;
 	}
+	std::cout << "Response : " << tmp << std::endl;
 	return 0;
 }
 
@@ -642,7 +673,7 @@ int wait_for_prompt()
     return r;
 }
 
-int wait_for_response()
+int wait_for_response(int& value)
 {
     int r, code, done, outoff;
     std::string errmsg;
@@ -650,7 +681,7 @@ int wait_for_response()
 
     if (!g_valid)
     {
-        std::cerr << "Not connected to server " << std::endl;;
+        std::cerr << "Not connected to server " << std::endl;
     }
     for (;;)
     {
@@ -658,44 +689,141 @@ int wait_for_response()
         switch (r)
         {
         case CLN_NEXT_PROMPT:
-        	g_errorMessage = errmsg;
-            std::clog << ("(warning) No return code from the server.") << std::endl;;
+            std::cerr << "(warning) No return code from the server." << std::endl;
             g_prompts++;
             return -1;
-
         case CLN_NEXT_ERRMSG:
-        	g_errorMessage = errmsg;
             std::cout << "\t---> message: " << errmsg << std::endl;
             break;
-
         case CLN_NEXT_DEBUGMSG:
             std::cout << "\t---> message: " << errmsg << std::endl;
             break;
-
         case CLN_NEXT_UNKNOWN:
-            std::cout << "Unknown string from server: "+ errmsg << std::endl;
+            std::cerr << "Unknown string from server: "<< errmsg << std::endl;
             break;
-
         case CLN_NEXT_TIMEBAR:
-            std::clog << "Do nothing !!!" << std::endl;
+            std::clog << "Do nothing !!!!!" << std::endl;
             break;
         case CLN_NEXT_INTRET:
-            std::cout << "\t---> value: " << code << std::endl;
-            if (code == -1)
+            value = code;
+            std::clog << "\t---> value: " << value << std::endl;
+            if (value == -1)
             {
-                wait_for_response();
+                std::string error_message;
+                wait_for_response(error_message);
             }
             return 0;
-
         case CLN_NEXT_DBLRET:
-            std::clog << "Unexpected double return code." << std::endl;
+            std::cerr << "Unexpected double return code." << std::endl;
             return -1;
         case CLN_NEXT_STRRET:
-            std::clog << "Server responded with a string." << std::endl;
+            std::cerr << "Server responded with a string." << std::endl;
             return -1;
         default:
-            std::clog << "Programming error. Please report" << std::endl;
+            std::cerr << "Programming error. Please report" << std::endl;
         }
     }
-    return r;
+    return 0;
+}
+
+/*
+ *  Wait for an double response
+ */
+int wait_for_response(double& value)
+{
+    int r, done, outoff;
+    double code;
+    std::string errmsg;
+    g_debugMessages.clear();
+
+    if (!g_valid)
+    {
+        std::cerr << "Not connected to server " << std::endl;
+    }
+    for (;;)
+    {
+        r = next_line(&errmsg, 0, &code, 0, &done, &outoff);
+        switch (r)
+        {
+        case CLN_NEXT_PROMPT:
+            std::cerr << "(warning) No return code from the server." << std::endl;
+            g_prompts++;
+            return -1;
+        case CLN_NEXT_ERRMSG:
+            std::cout << "\t---> message: " << errmsg << std::endl;
+            break;
+        case CLN_NEXT_DEBUGMSG:
+            std::cout << "\t---> message: " << errmsg << std::endl;
+            break;
+        case CLN_NEXT_UNKNOWN:
+            std::cerr << "Unknown string from server: " << errmsg << std::endl;
+            break;
+        case CLN_NEXT_TIMEBAR:
+            std::clog << "Do nothing !!!!!!!!!!" << std::endl;
+            break;
+        case CLN_NEXT_INTRET:
+            std::cerr << "Unexpected integer return code." << std::endl;
+            return -1;
+        case CLN_NEXT_DBLRET:
+            value = code;
+            std::clog << "\t---> value: " << value << std::endl;
+            return 0;
+        case CLN_NEXT_STRRET:
+            std::cerr << "Server responded with a string." << std::endl;
+            return -1;
+        default:
+            std::cerr << "Programming error. Please report" << std::endl;
+        }
+    }
+    return 0;
+}
+
+/*
+ *  Waits for a string response
+ */
+int wait_for_response(std::string& value)
+{
+    int r, done, outoff;
+    std::string errmsg;
+    g_debugMessages.clear();
+
+    if (!g_valid)
+    {
+        std::cerr << "Not connected to server " << std::endl;
+    }
+    for (;;)
+    {
+        r = next_line(&errmsg, 0, 0, &value, &done, &outoff);
+        switch (r)
+        {
+        case CLN_NEXT_PROMPT:
+           std::cerr << "(warning) No return code from the server." << std::endl;
+            g_prompts++;
+            return -1;
+        case CLN_NEXT_ERRMSG:
+            std::cout << "\t---> message: " << errmsg << std::endl;
+            break;
+        case CLN_NEXT_DEBUGMSG:
+            std::cout << "\t---> message: " << errmsg << std::endl;
+            break;
+        case CLN_NEXT_UNKNOWN:
+            std::clog << "Unknown string from server." << std::endl;
+            break;
+        case CLN_NEXT_TIMEBAR:
+            std::clog << "Do nothing !!!!!!!!!" << std::endl;
+            break;
+        case CLN_NEXT_INTRET:
+            std::cerr << "Server responded with an integer" << std::endl;
+            return -1;
+        case CLN_NEXT_DBLRET:
+            std::cerr << "Server responded with a double" << std::endl;
+            return -1;
+        case CLN_NEXT_STRRET:
+            std::cout << "\t---> message: " << value  << std::endl;
+            return (value.length() == 0) ? -1 : 0;
+        default:
+            std::cerr << "Programming error. Please report" << std::endl;
+        }
+    }
+    return 0;
 }
