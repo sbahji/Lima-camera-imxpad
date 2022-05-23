@@ -158,7 +158,9 @@ public:
     void getImageType(ImageType& type);
     void setImageType(ImageType type);
     void getDetectorType(std::string& type);
+    void getDetectorTypeFromHardware(std::string& type);
     void getDetectorModel(std::string& model);
+    void getDetectorModelFromHardware(std::string& model);
     void getImageSize(Size& size);
     void getPixelSize(double& size_x, double& size_y);
     int setModuleMask(unsigned int moduleMask);
@@ -430,6 +432,7 @@ private:
     int                     m_chip_number;
     int                     m_burst_number;
     unsigned int            m_stack_images;
+    std::string				m_image_size_from_hardware;
 
 
     // Buffer control object

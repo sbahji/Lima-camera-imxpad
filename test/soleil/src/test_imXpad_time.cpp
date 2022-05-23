@@ -84,6 +84,7 @@ int wait_for_response(double& value);
 int wait_for_response(int& value);
 int get_data_expose(void *bptr, unsigned short xpadFormat);
 
+
 //--------------------------------------------------------------------------------------
 // test main:
 
@@ -133,6 +134,7 @@ int main(int argc, char *argv[])
 			break;
 
 			case 7:
+
 			{
 				std::istringstream arg_hostname(argv[1]);
 				arg_hostname >> g_hostname;
@@ -151,6 +153,7 @@ int main(int argc, char *argv[])
 
 				std::istringstream arg_choice(argv[6]);
 				arg_choice >> g_choice;
+
 			}
 			break;
 
@@ -180,9 +183,6 @@ int main(int argc, char *argv[])
 			std::cout << "Ready for acqusition" << std::endl;
 		}
 
-
-
-
 		if('l' == g_choice)
 		{
 			std::cout << "Start test with Lima" << std::endl;
@@ -201,7 +201,6 @@ int main(int argc, char *argv[])
 		}
 		sleep(5);
 		disconnect_from_server();
-
 	}
 	catch (std::exception& e)
 	{
@@ -226,6 +225,7 @@ void hardware_with_lima()
 	std::cout << "Creating Interface Object..." << std::endl;
 	lima::imXpad::Interface my_interface(my_camera);
 	my_camera.setImageType(lima::Bpp32S);
+
 
 	std::cout << "Creating CtControl Object..." << std::endl;
 	lima::CtControl my_control(&my_interface);
@@ -334,6 +334,7 @@ void hardware_without_lima()
 			<< output_path;
 
 	send_cmd(prepare_cmd.str());
+
 
 	void* buffer_ptr;
 	int ret = posix_memalign(&buffer_ptr, 16, 2048);
@@ -455,7 +456,6 @@ void send_cmd_str(const std::string& str)
 	cmd << str;
 	send_cmd(cmd.str());
 }
-
 int receive_from_server()
 {
 	int r;
@@ -693,6 +693,7 @@ int wait_for_response(int& value)
         switch (r)
         {
         case CLN_NEXT_PROMPT:
+
             std::cerr << "(warning) No return code from the server." << std::endl;
             g_prompts++;
             return -1;
