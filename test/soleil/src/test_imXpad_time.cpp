@@ -82,6 +82,7 @@ int wait_for_prompt();
 int wait_for_response(std::string& value);
 int wait_for_response(double& value);
 int wait_for_response(int& value);
+int get_data_expose(void *bptr, unsigned short xpadFormat);
 
 //--------------------------------------------------------------------------------------
 // test main:
@@ -303,7 +304,7 @@ void hardware_without_lima()
 	struct timeval interval_begin, interval_end;
 
 	//SetExposureParameters
-	unsigned int latency_time(5000);//µs
+	unsigned int latency_time(15000);//µs
 	unsigned int overflow_time(4000); //µs
 	unsigned short trigger_mode(0);
 	unsigned short output_mode(0);
@@ -313,13 +314,13 @@ void hardware_without_lima()
 	unsigned short output_format_file(0);
 	unsigned short acquisition_mode(0);
 	unsigned short image_stack(1);
-	const std::string& output_path("/home/cegitek/imXPAD/tmp_corrected/");
+	const std::string& output_path("/opt/imXPAD/tmp_corrected/");
 
 	std::stringstream prepare_cmd;
 
 	prepare_cmd << "SetExposureParameters "
 			<< g_nb_frames << " "
-			<< g_exposure_time << " "
+			<< g_exposure_time * 1e6 << " "
 			<< latency_time << " "
 			<< overflow_time << " "
 			<< trigger_mode << " "
@@ -333,8 +334,11 @@ void hardware_without_lima()
 			<< output_path;
 
 	send_cmd(prepare_cmd.str());
-	sleep(4);
 
+	void* buffer_ptr;
+	int ret = posix_memalign(&buffer_ptr, 16, 2048);
+		if (ret != 0)
+			std::cerr << "Error in posix_memalign: " << strerror(ret) << std::endl;
 
 	std::cout << "--------------------------------------------" << std::endl;
 	gettimeofday(&_start_time, NULL);
@@ -344,7 +348,7 @@ void hardware_without_lima()
 
 	do
 	{
-		rc = wait_for_prompt();
+		rc = get_data_expose(&buffer_ptr, 1);
 	}while(0 != rc);
 	gettimeofday(&now, NULL);
 
@@ -826,4 +830,98 @@ int wait_for_response(std::string& value)
         }
     }
     return 0;
+}
+
+int get_data_expose(void *bptr, unsigned short xpadFormat)
+{
+	int16_t *buffer_short;
+	int32_t *buffer_int;
+	int32_t *data_buff;
+
+	if (xpadFormat==0)
+		buffer_short = (int16_t *)bptr;
+	else
+		buffer_int = (int32_t *)bptr;
+
+	uint32_t data_size = 0;
+	uint32_t line_final_image = 0;
+	uint32_t column_final_image = 0;
+	uint32_t bytes_received = 0;
+	ssize_t bytes = 0;
+	std::cout << "read header from server [BEGIN]" << std::endl;
+
+	unsigned char data_chain[3*sizeof(int32_t)];
+	while(bytes_received < 3*sizeof(uint32_t))
+	{
+		bytes = read(g_skt, data_chain + bytes_received, 3*sizeof(uint32_t) - bytes_received);
+		std::cout << "bytes = " << bytes << std::endl;
+		if(bytes < 0)
+		{
+			std::cerr << "Read from server error : " << strerror(errno) << std::endl;
+		}
+		bytes_received += bytes;
+	}
+	std::cout << "bytes_received = " << bytes_received << std::endl;
+	std::cout << "read header from server [END]" << std::endl;
+
+	data_size = data_chain[3]<<24|data_chain[2]<<16|data_chain[1]<<8|data_chain[0];
+	line_final_image = data_chain[7]<<24|data_chain[6]<<16|data_chain[5]<<8|data_chain[4];
+	column_final_image = data_chain[11]<<24|data_chain[10]<<16|data_chain[9]<<8|data_chain[8];
+
+	std::cout << "data_size = " << data_size << std::endl;
+	std::cout << "line_final_image = " << line_final_image << std::endl;
+	std::cout << "column_final_image = " << column_final_image << std::endl;
+	std::cout << "data_chain[0] = " << data_chain[0] << std::endl;
+
+	if(data_size > 0 && data_chain[0] != '*')
+	{
+
+		unsigned char *data = new unsigned char[data_size];
+		data_buff = new int32_t[line_final_image*column_final_image ];
+		std::cout << "read data from server [BEGIN]" << std::endl;
+		bytes_received = 0;
+		bytes = 0;
+		while(bytes_received < data_size)
+		{
+			bytes = read(g_skt, data + bytes_received, data_size - bytes_received);
+			if(bytes < 0)
+			{
+				std::cerr << "Read data from server error : " << strerror(errno) << std::endl;
+			}
+			bytes_received += bytes;
+		}
+		std::cout << "bytes_received = " << bytes_received << std::endl;
+		std::cout << "read data from server [END]" << std::endl;
+
+		write(g_skt,"\n",sizeof(char));
+
+		uint32_t count = 0;
+		int i=0;
+		while (count < data_size)
+		{
+
+			if (xpadFormat==0)
+			{
+				memcpy (&data_buff[i], &data[count], sizeof(int32_t) );
+				buffer_short[i] = (int16_t)(data_buff[i]);
+			}
+			else
+			{
+				memcpy (&data_buff[i], &data[count], sizeof(int32_t) );
+				buffer_int[i] = (int32_t)(data_buff[i]);
+			}
+			count += sizeof(int32_t);
+			i++;
+		}
+
+		delete[] data_buff;
+		delete[] data;
+		return 0;
+
+	}
+	else
+	{
+		write(g_skt,"\n",sizeof(char));
+		return -1;
+	}
 }
