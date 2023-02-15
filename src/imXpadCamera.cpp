@@ -39,7 +39,6 @@
 #include <fstream>
 
 
-using namespace std;
 using namespace lima;
 using namespace lima::imXpad;
 
@@ -76,7 +75,7 @@ private:
 // @brief  Ctor
 //---------------------------m_npixels
 
-Camera::Camera(string hostname, int port, unsigned int moduleMask) : m_host_name(hostname), m_port(port)
+Camera::Camera(std::string hostname, int port, unsigned int moduleMask) : m_host_name(hostname), m_port(port)
 {
 	DEB_CONSTRUCTOR();
 
@@ -100,7 +99,7 @@ Camera::Camera(string hostname, int port, unsigned int moduleMask) : m_host_name
 		THROW_HW_ERROR(Error) << "[ " << m_xpad_alt->getErrorMessage() << " ]";
 	}
 	m_state.state = XpadStatus::Idle;
-	string xpad_type, xpad_model;
+	std::string xpad_type, xpad_model;
 
 	init();
 	getDetectorTypeFromHardware(xpad_type);
@@ -142,9 +141,9 @@ int Camera::init()
 	DEB_TRACE() << "********** Inside of Camera::init ***********";
 	m_acq_frame_nb = 0;
 	int ret;
-	stringstream cmd;
+	std::stringstream cmd;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "Init";
 	m_xpad->sendWait(cmd.str(), ret);
 
@@ -174,9 +173,9 @@ void Camera::quit()
 	DEB_MEMBER_FUNCT();
 	DEB_TRACE() << "********** Inside of Camera::exit ***********";
 
-	stringstream cmd;
+	std::stringstream cmd;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "Exit";
 	m_xpad->sendNoWait(cmd.str());
 	m_xpad_alt->sendNoWait(cmd.str());
@@ -189,7 +188,7 @@ void Camera::reset()
 	DEB_MEMBER_FUNCT();
 	DEB_TRACE() << "********** Inside of Camera::reset ***********";
 
-	stringstream cmd1;
+	std::stringstream cmd1;
 	cmd1 << "ResetDetector";
 	m_xpad->sendNoWait(cmd1.str());
 	DEB_TRACE() << "Reset of detector  -> OK";
@@ -205,7 +204,7 @@ int Camera::prepareAcq()
 	//waitAcqEnd();
 
 	int value;
-	stringstream cmd1;
+	std::stringstream cmd1;
 
 	m_image_file_format = 1;
 
@@ -232,7 +231,7 @@ int Camera::prepareAcq()
 
 		if (!m_image_transfer_flag)
 		{
-			stringstream fileName;
+			std::stringstream fileName;
 			fileName << "/opt/imXPAD/tmp_corrected/burst_" << m_burst_number << "_*";
 			remove(fileName.str().c_str());
 			//m_burst_number = getBurstNumber();
@@ -355,14 +354,14 @@ void Camera::getStatus(XpadStatus& status)
 	DEB_MEMBER_FUNCT();
 	DEB_TRACE() << "********** Inside of Camera::getStatus ***********";
 	CHECK_DETECTOR_ACCESS
-	stringstream cmd;
-	string str;
+	std::stringstream cmd;
+	std::string str;
 	unsigned short pos;
 	cmd << "GetDetectorStatus";
 
 	m_xpad_alt->sendWaitCustom(cmd.str(), str);
 	pos = str.find(".");
-	string state = str.substr (0, pos);
+	std::string state = str.substr (0, pos);
 	if (state == "Idle")
 	{
 		status.state = XpadStatus::Idle;
@@ -489,7 +488,7 @@ void Camera::AcqThread::threadFunction()
 							else
 								buffer_int = (int32_t *) bptr;
 
-							stringstream fileName;
+							std::stringstream fileName;
 
 							fileName << "/opt/imXPAD/tmp_corrected/burst_" << m_cam.m_burst_number << "_image_" << m_cam.m_acq_frame_nb  << ".bin";
 
@@ -505,7 +504,7 @@ void Camera::AcqThread::threadFunction()
 							if (access( fileName.str().c_str(), F_OK ) == 0)
 							{
 
-								ifstream file(fileName.str().c_str(), ios::in | ios::binary);
+								std::ifstream file(fileName.str().c_str(), std::ios::in | std::ios::binary);
 
 								if (file.is_open())
 								{
@@ -546,7 +545,7 @@ void Camera::AcqThread::threadFunction()
 			case 1:
 			{ //CalibrationOTN
 				int ret;
-				stringstream cmd;
+				std::stringstream cmd;
 
 				cmd <<  "CalibrationOTN " << m_cam.m_calibration_configuration;
 				m_cam.m_xpad->sendWait(cmd.str(), ret);
@@ -563,7 +562,7 @@ void Camera::AcqThread::threadFunction()
 			case 2:
 			{ //CalibrationOTNPulse
 				int ret;
-				stringstream cmd;
+				std::stringstream cmd;
 
 				cmd <<  "CalibrationOTNPulse " << m_cam.m_calibration_configuration;
 				m_cam.m_xpad->sendWait(cmd.str(), ret);
@@ -581,7 +580,7 @@ void Camera::AcqThread::threadFunction()
 			case 3:
 			{ //CalibrationBEAM
 				int ret;
-				stringstream cmd;
+				std::stringstream cmd;
 
 				cmd <<  "CalibrationBEAM " << m_cam.m_time << " " << m_cam.m_ITHL_max << " " << m_cam.m_calibration_configuration;
 				m_cam.m_xpad->sendWait(cmd.str(), ret);
@@ -602,7 +601,7 @@ void Camera::AcqThread::threadFunction()
 
 				size_t pos = m_cam.m_file_path.find(".cf");
 
-				if (pos == string::npos)
+				if (pos == std::string::npos)
 				{
 					m_cam.m_file_path.append(".cfg");
 					pos = m_cam.m_file_path.length() - 4;
@@ -625,7 +624,7 @@ void Camera::AcqThread::threadFunction()
 
 				size_t pos = m_cam.m_file_path.find(".cf");
 
-				if (pos == string::npos)
+				if (pos == std::string::npos)
 				{
 					m_cam.m_file_path.append(".cfg");
 					pos = m_cam.m_file_path.length() - 4;
@@ -643,8 +642,8 @@ void Camera::AcqThread::threadFunction()
 			}
 			case 6:
 			{ //Load Default Config G values
-				string ret;
-				stringstream cmd;
+				std::string ret;
+				std::stringstream cmd;
 				int value, regid;
 
 				for (int i = 0; i < 7; i++)
@@ -674,7 +673,7 @@ void Camera::AcqThread::threadFunction()
 							break;
 					}
 
-					string register_name;
+					std::string register_name;
 					switch (regid)
 					{
 						case 31: register_name = "AMPTP";
@@ -695,7 +694,7 @@ void Camera::AcqThread::threadFunction()
 							break;
 					}
 
-					cmd.str(string());
+					cmd.str(std::string());
 					cmd << "LoadConfigG " << register_name << " " << value ;
 					m_cam.m_xpad->sendWait(cmd.str(), ret);
 				}
@@ -710,9 +709,9 @@ void Camera::AcqThread::threadFunction()
 			case 7:
 			{ //ITHL Increase
 				int ret;
-				stringstream cmd;
+				std::stringstream cmd;
 
-				cmd.str(string());
+				cmd.str(std::string());
 				cmd << "ITHLIncrease";
 				m_cam.m_xpad->sendWait(cmd.str(), ret);
 
@@ -726,9 +725,9 @@ void Camera::AcqThread::threadFunction()
 			case 8:
 			{  //ITHL Decrease
 				int ret;
-				stringstream cmd;
+				std::stringstream cmd;
 
-				cmd.str(string());
+				cmd.str(std::string());
 				cmd << "ITHLDecrease";
 				m_cam.m_xpad->sendWait(cmd.str(), ret);
 
@@ -742,9 +741,9 @@ void Camera::AcqThread::threadFunction()
 			case 9:
 			{  //LoadFloatConfigL
 				int ret;
-				stringstream cmd;
+				std::stringstream cmd;
 
-				cmd.str(string());
+				cmd.str(std::string());
 				cmd <<  "LoadFlatConfigL " << " " << m_cam.m_flat_value;
 				m_cam.m_xpad->sendWait(cmd.str(), ret);
 
@@ -789,13 +788,13 @@ void Camera::getImageSize(Size& size)
 {
 
 	DEB_MEMBER_FUNCT();
-	string message;
-	stringstream cmd;
+	std::string message;
+	std::stringstream cmd;
 
 	if( m_image_size_from_hardware.empty() )
 	{
 		CHECK_DETECTOR_ACCESS
-		cmd.str(string());
+		cmd.str(std::string());
 		cmd << "GetImageSize";
 		m_xpad->sendWait(cmd.str(), m_image_size_from_hardware);
 	}
@@ -859,10 +858,10 @@ void Camera::getDetectorTypeFromHardware(std::string& type)
 {
 	DEB_MEMBER_FUNCT();
 	CHECK_DETECTOR_ACCESS
-	string message;
-	stringstream cmd;
+	std::string message;
+	std::stringstream cmd;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "GetDetectorType";
 	m_xpad->sendWait(cmd.str(), type);
 
@@ -878,10 +877,10 @@ void Camera::getDetectorModelFromHardware(std::string& model)
 {
 	DEB_MEMBER_FUNCT();
 	CHECK_DETECTOR_ACCESS
-	string message;
-	stringstream cmd;
+	std::string message;
+	std::stringstream cmd;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "GetDetectorModel";
 	m_xpad->sendWait(cmd.str(), model);
 
@@ -1005,15 +1004,15 @@ bool Camera::isAcqRunning() const
 // XPAD Specific
 /////////////////////////
 
-string Camera::getUSBDeviceList(void)
+std::string Camera::getUSBDeviceList(void)
 {
 	DEB_MEMBER_FUNCT();
 	DEB_TRACE() << "********** Inside of Camera::getUSBDeviceList ***********";
 
-	string message;
-	stringstream cmd;
+	std::string message;
+	std::stringstream cmd;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "GetUSBDeviceList";
 	m_xpad->sendWait(cmd.str(), message);
 
@@ -1031,9 +1030,9 @@ int Camera::setUSBDevice(unsigned short device)
 	DEB_TRACE() << "********** Inside of Camera::setUSBDevice ***********";
 
 	int ret;
-	stringstream cmd;
+	std::stringstream cmd;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "SetUSBDevice " << device;
 	m_xpad->sendWait(cmd.str(), ret);
 
@@ -1053,9 +1052,9 @@ DEB_MEMBER_FUNCT();
 DEB_TRACE() << "********** Inside of Camera::DefineDetectorModel ***********";
 
 int ret;
-stringstream cmd;
+std::stringstream cmd;
 
-cmd.str(string());
+cmd.str(std::string());
 cmd << "DefineDetectorModel " << model;
 m_xpad->sendWait(cmd.str(), ret);
 
@@ -1077,11 +1076,11 @@ int Camera::setModuleMask(unsigned int moduleMask)
 	DEB_TRACE() << "********** Inside of Camera::setModuleMask ***********";
 
 	int ret;
-	stringstream cmd;
+	std::stringstream cmd;
 
 	m_module_mask = moduleMask;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "SetModuleMask " << moduleMask;
 	m_xpad->sendWait(cmd.str(), ret);
 
@@ -1102,9 +1101,9 @@ void Camera::getModuleMask()
 	DEB_TRACE() << "********** Inside of Camera::getModuleMask ***********";
 
 	int ret;
-	stringstream cmd;
+	std::stringstream cmd;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "GetModuleMask";
 	m_xpad->sendWait(cmd.str(), ret);
 
@@ -1119,9 +1118,9 @@ void Camera::getModuleNumber()
 	DEB_TRACE() << "********** Inside of Camera::getModuleNumber ***********";
 
 	int ret;
-	stringstream cmd;
+	std::stringstream cmd;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "GetModuleNumber";
 	m_xpad->sendWait(cmd.str(), ret);
 
@@ -1136,9 +1135,9 @@ void Camera::getChipMask()
 	DEB_TRACE() << "********** Inside of Camera::getChipMask ***********";
 
 	int ret;
-	stringstream cmd;
+	std::stringstream cmd;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "GetChipMask";
 	m_xpad->sendWait(cmd.str(), ret);
 
@@ -1153,9 +1152,9 @@ void Camera::getChipNumber()
 	DEB_TRACE() << "********** Inside of Camera::getChipNumber ***********";
 
 	int ret;
-	stringstream cmd;
+	std::stringstream cmd;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "GetChipNumber";
 	m_xpad->sendWait(cmd.str(), ret);
 
@@ -1170,9 +1169,9 @@ int Camera::askReady()
 	DEB_TRACE() << "********** Inside of Camera::askReady ***********";
 
 	int ret;
-	stringstream cmd;
+	std::stringstream cmd;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "AskReady";
 	m_xpad->sendWait(cmd.str(), ret);
 
@@ -1194,9 +1193,9 @@ int Camera::digitalTest(unsigned short mode)
 	DEB_TRACE() << "********** Inside of Camera::digitalTest ***********";
 
 	int ret;
-	stringstream cmd;
+	std::stringstream cmd;
 
-	string mode_name;
+	std::string mode_name;
 
 	switch (mode)
 	{
@@ -1209,11 +1208,11 @@ int Camera::digitalTest(unsigned short mode)
 		default: mode_name = "strip";
 	}
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "SetGeometricalCorrectionFlag " << "false";
 	m_xpad->sendWait(cmd.str(), ret);
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "DigitalTest " << mode_name.c_str();
 	m_xpad->sendNoWait(cmd.str());
 
@@ -1226,7 +1225,7 @@ int Camera::digitalTest(unsigned short mode)
 	int32_t val;
 	//Saving Digital Test image to disk
 	mkdir("./Images", S_IRWXU |  S_IRWXG |  S_IRWXO);
-	ofstream file("./DigitalTest.bin", ios::out | ios::binary);
+	std::ofstream file("./DigitalTest.bin", std::ios::out | std::ios::binary);
 	if (file.is_open())
 	{
 		for (int i = 0;i < rows;i++)
@@ -1259,9 +1258,9 @@ int Camera::loadConfigGFromFile(char *fpath)
 
 	DEB_TRACE() << "LoadConfigGFromFile : " << fpath;
 	int ret;
-	stringstream cmd;
+	std::stringstream cmd;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "LoadConfigGFromFile ";
 
 	m_xpad->sendNoWait(cmd.str());
@@ -1288,14 +1287,14 @@ int Camera::saveConfigGToFile(char *fpath)
 	int ret;
 	unsigned short  regid;
 
-	stringstream cmd;
+	std::stringstream cmd;
 
 	//File is being open to be writen
-	ofstream file(fpath, ios::out);
+	std::ofstream file(fpath, std::ios::out);
 	if (file.is_open())
 	{
 
-		string          retString;
+		std::string          retString;
 
 		//All registers are being read
 		for (unsigned short registro = 0; registro < 7; registro++)
@@ -1317,7 +1316,7 @@ int Camera::saveConfigGToFile(char *fpath)
 				case 6: regid = IBUFF;
 			}
 
-			string register_name;
+			std::string register_name;
 			switch (regid)
 			{
 				case 31: register_name = "AMPTP";
@@ -1338,11 +1337,11 @@ int Camera::saveConfigGToFile(char *fpath)
 			}
 
 			//Each register value is read from the detector
-			cmd.str(string());
+			cmd.str(std::string());
 			cmd << "ReadConfigG " << register_name;
 			m_xpad->sendWait(cmd.str(), retString);
 
-			stringstream stream(retString.c_str());
+			std::stringstream stream(retString.c_str());
 			int length = retString.length();
 
 			unsigned mdMask = 1;
@@ -1360,7 +1359,7 @@ int Camera::saveConfigGToFile(char *fpath)
 						if (count > 0)
 							file << retString << " ";
 					}
-					file << endl;
+					file << std::endl;
 					mdMask = mdMask << 1;
 					ret = 0;
 					if (mdMask <= m_module_mask)
@@ -1398,13 +1397,13 @@ int Camera::loadConfigG(char *regID, unsigned short value)
 	DEB_MEMBER_FUNCT();
 	DEB_TRACE() << "********** Inside of Camera::loadConfigG ***********";
 
-	string ret;
-	stringstream cmd;
+	std::string ret;
+	std::stringstream cmd;
 
-	string register_name;
+	std::string register_name;
 	register_name.append(regID);
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "LoadConfigG " << register_name.c_str() << " " << value ;
 	m_xpad->sendWait(cmd.str(), ret);
 
@@ -1427,13 +1426,13 @@ int Camera::readConfigG(char *regID)
 	DEB_MEMBER_FUNCT();
 	DEB_TRACE() << "********** Inside of Camera::readConfigG ***********";
 
-	string message;
-	stringstream cmd;
+	std::string message;
+	std::stringstream cmd;
 	int reg;
 
 	unsigned short *ret = new unsigned short[8];
 
-	string register_name;
+	std::string register_name;
 	register_name.append(regID);
 
 	if (register_name == "AMPTP")
@@ -1453,7 +1452,7 @@ int Camera::readConfigG(char *regID)
 	else
 		reg = 62;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "ReadConfigG " << register_name;
 	m_xpad->sendWait(cmd.str(), message);
 
@@ -1579,9 +1578,9 @@ int Camera::loadConfigLFromFile(char *fpath)
 	DEB_TRACE() << "********** Inside of Camera::loadConfigLFromFile ***********";
 	DEB_TRACE() << "LoadConfigLFromFile : " << fpath;
 	int ret;
-	stringstream cmd;
+	std::stringstream cmd;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "LoadConfigLFromFile ";
 
 	m_xpad->sendNoWait(cmd.str());
@@ -1607,8 +1606,8 @@ int Camera::saveConfigLToFile(char *fpath)
 	DEB_MEMBER_FUNCT();
 	DEB_TRACE() << "********** Inside of Camera::saveConfigLToFile ***********";
 
-	stringstream cmd;
-	//string str;
+	std::stringstream cmd;
+	//std::string str;
 	int ret;
 
 	cmd << "ReadConfigL";
@@ -1664,8 +1663,8 @@ void Camera::setGeometricalCorrectionFlag(unsigned short flag)
 	m_geometrical_correction_flag = flag;
 
 	int ret;
-	string message, flag_state;
-	stringstream cmd;
+	std::string message, flag_state;
+	std::stringstream cmd;
 	Size size;
 
 	switch (flag)
@@ -1675,7 +1674,7 @@ void Camera::setGeometricalCorrectionFlag(unsigned short flag)
 		default: flag_state = "true";
 	}
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "SetGeometricalCorrectionFlag " << flag_state.c_str();
 	m_xpad->sendWait(cmd.str(), ret);
 
@@ -1742,8 +1741,8 @@ void Camera::setNoisyPixelCorrectionFlag(unsigned short flag)
 	m_noisy_pixel_correction_flag = flag;
 
 	int ret;
-	string message, flag_state;
-	stringstream cmd;
+	std::string message, flag_state;
+	std::stringstream cmd;
 	Size size;
 
 	switch (flag)
@@ -1754,7 +1753,7 @@ void Camera::setNoisyPixelCorrectionFlag(unsigned short flag)
 			break;
 	}
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "SetNoisyPixelCorrectionFlag " << flag_state.c_str();
 	m_xpad->sendWait(cmd.str(), ret);
 }
@@ -1763,11 +1762,11 @@ unsigned short Camera::getNoisyPixelCorrectionFlag()
 {
 	DEB_MEMBER_FUNCT();
 
-	string ret;
-	string message;
-	stringstream cmd;
+	std::string ret;
+	std::string message;
+	std::stringstream cmd;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "GetNoisyPixelCorrectionFlag ";
 	m_xpad->sendWait(cmd.str(), ret);
 
@@ -1788,8 +1787,8 @@ void Camera::setDeadPixelCorrectionFlag(unsigned short flag)
 	m_flat_field_correction_flag = flag;
 
 	int ret;
-	string message, flag_state;
-	stringstream cmd;
+	std::string message, flag_state;
+	std::stringstream cmd;
 
 	switch (flag)
 	{
@@ -1799,7 +1798,7 @@ void Camera::setDeadPixelCorrectionFlag(unsigned short flag)
 			break;
 	}
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "SetDeadPixelCorrectionFlag " << flag_state.c_str();
 	m_xpad->sendWait(cmd.str(), ret);
 }
@@ -1808,11 +1807,11 @@ unsigned short Camera::getDeadPixelCorrectionFlag()
 {
 	DEB_MEMBER_FUNCT();
 
-	string ret;
-	string message;
-	stringstream cmd;
+	std::string ret;
+	std::string message;
+	std::stringstream cmd;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "GetDeadPixelCorrectionFlag ";
 	m_xpad->sendWait(cmd.str(), ret);
 
@@ -2028,7 +2027,7 @@ void Camera::abortCurrentProcess()
 	DEB_MEMBER_FUNCT();
 	DEB_TRACE() << "********** Inside of Camera::abortCurrentProcess ***********";
 
-	stringstream cmd;
+	std::stringstream cmd;
 
 	m_quit = true;
 	m_cond.broadcast();
@@ -2044,7 +2043,7 @@ int Camera::increaseBurstNumber()
 
 	DEB_MEMBER_FUNCT();
 	DEB_TRACE() << "********** Inside of Camera::decreaseBurstNumber ***********";
-	stringstream cmd;
+	std::stringstream cmd;
 	int ret;
 
 	cmd << "IncreaseBurstNumber";
@@ -2060,7 +2059,7 @@ int Camera::decreaseBurstNumber()
 
 	DEB_MEMBER_FUNCT();
 	DEB_TRACE() << "********** Inside of Camera::decreaseBurstNumber ***********";
-	stringstream cmd;
+	std::stringstream cmd;
 	int ret;
 
 	cmd << "DecreaseBurstNumber";
@@ -2076,7 +2075,7 @@ int Camera::getBurstNumber()
 
 	DEB_MEMBER_FUNCT();
 	DEB_TRACE() << "********** Inside of Camera::getBurstNumber ***********";
-	stringstream cmd;
+	std::stringstream cmd;
 	int ret;
 
 	cmd << "GetBurstNumber";
@@ -2094,7 +2093,7 @@ int Camera::resetBurstNumber()
 
 	DEB_MEMBER_FUNCT();
 	DEB_TRACE() << "********** Inside of Camera::resetBurstNumber ***********";
-	stringstream cmd;
+	std::stringstream cmd;
 	int ret;
 
 	cmd << "ResetBurstNumber";
@@ -2116,7 +2115,7 @@ void Camera::exit()
 
 	DEB_MEMBER_FUNCT();
 	DEB_TRACE() << "********** Inside of Camera::exit ***********";
-	stringstream cmd;
+	std::stringstream cmd;
 
 	cmd << "Exit";
 	m_xpad->sendNoWait(cmd.str());
@@ -2136,9 +2135,9 @@ int Camera::createWhiteImage(char* fileName)
 	DEB_TRACE() << "********** Inside of Camera::createWhiteImage ***********";
 
 	int ret;
-	stringstream cmd;
+	std::stringstream cmd;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "CreateWhiteImage " << fileName;
 	m_xpad->sendWait(cmd.str(), ret);
 
@@ -2153,9 +2152,9 @@ int Camera::deleteWhiteImage(char* fileName)
 	DEB_TRACE() << "********** Inside of Camera::deleteWhiteImage ***********";
 
 	int ret;
-	stringstream cmd;
+	std::stringstream cmd;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "DeleteWhiteImage " << fileName;
 	m_xpad->sendWait(cmd.str(), ret);
 
@@ -2170,9 +2169,9 @@ int Camera::setWhiteImage(char* fileName)
 	DEB_TRACE() << "********** Inside of Camera::setWhiteImage ***********";
 
 	int ret;
-	stringstream cmd;
+	std::stringstream cmd;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "SetWhiteImage " << fileName;
 	m_xpad->sendWait(cmd.str(), ret);
 
@@ -2186,10 +2185,10 @@ std::string Camera::getWhiteImagesInDir()
 	DEB_MEMBER_FUNCT();
 	DEB_TRACE() << "********** Inside of Camera::getWhiteImagesInDir ***********";
 
-	string message;
-	stringstream cmd;
+	std::string message;
+	std::stringstream cmd;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "GetWhiteImagesInDir";
 	m_xpad->sendWait(cmd.str(), message);
 
@@ -2209,8 +2208,8 @@ int Camera::setDebugMode(unsigned short flag)
 	DEB_TRACE() << "********** Inside of Camera::setDebugMode ***********";
 
 	int ret;
-	string flag_state;
-	stringstream cmd;
+	std::string flag_state;
+	std::stringstream cmd;
 
 	switch (flag)
 	{
@@ -2220,7 +2219,7 @@ int Camera::setDebugMode(unsigned short flag)
 			break;
 	}
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "SetDebugMode " << flag_state.c_str();
 	m_xpad->sendWait(cmd.str(), ret);
 
@@ -2235,8 +2234,8 @@ int Camera::showTimers(unsigned short flag)
 	DEB_TRACE() << "********** Inside of Camera::showTimers ***********";
 
 	int ret;
-	string flag_state;
-	stringstream cmd;
+	std::string flag_state;
+	std::stringstream cmd;
 
 	switch (flag)
 	{
@@ -2246,7 +2245,7 @@ int Camera::showTimers(unsigned short flag)
 			break;
 	}
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "ShowTimers " << flag_state.c_str();
 	m_xpad->sendWait(cmd.str(), ret);
 
@@ -2261,9 +2260,9 @@ int Camera::createDeadNoisyMask()
 	DEB_TRACE() << "********** Inside of Camera::showTimers ***********";
 
 	int ret;
-	stringstream cmd;
+	std::stringstream cmd;
 
-	cmd.str(string());
+	cmd.str(std::string());
 	cmd << "CreateDeadNoisyMask ";
 	m_xpad->sendWait(cmd.str(), ret);
 
