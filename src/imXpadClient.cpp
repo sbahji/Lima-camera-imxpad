@@ -280,14 +280,14 @@ void XpadClient::sendExposeCommand(){
 int XpadClient::getDataExpose(void *bptr, unsigned short xpadFormat) {
     DEB_MEMBER_FUNCT();
 
-    int16_t *buffer_short;
-    int32_t *buffer_int;
-    int32_t *data_buff;
+    uint16_t *buffer_short;
+    uint32_t *buffer_int;
+    uint32_t *data_buff;
 
     if (xpadFormat==0)
-        buffer_short = (int16_t *)bptr;
+        buffer_short = (uint16_t *)bptr;
     else
-        buffer_int = (int32_t *)bptr;
+        buffer_int = (uint32_t *)bptr;
 
     uint32_t data_size = 0;
     uint32_t line_final_image = 0;
@@ -295,7 +295,7 @@ int XpadClient::getDataExpose(void *bptr, unsigned short xpadFormat) {
     uint32_t bytes_received = 0;
 	ssize_t bytes = 0;
 	DEB_TRACE() << "read header from server [BEGIN]";
-    unsigned char data_chain[3*sizeof(int32_t)];
+    unsigned char data_chain[3*sizeof(uint32_t)];
 	while(bytes_received < 3*sizeof(uint32_t)){
 		bytes = read(m_skt, data_chain + bytes_received, 3*sizeof(uint32_t) - bytes_received);
 		DEB_TRACE() << "bytes = " << bytes;
@@ -321,7 +321,7 @@ int XpadClient::getDataExpose(void *bptr, unsigned short xpadFormat) {
     if(data_size > 0 && data_chain[0] != '*'){
 
         unsigned char *data = new unsigned char[data_size];
-        data_buff = new int32_t[line_final_image*column_final_image ];
+        data_buff = new uint32_t[line_final_image*column_final_image ];
 		DEB_TRACE() << "read data from server [BEGIN]";
 		bytes_received = 0;	
 		bytes = 0;
@@ -343,14 +343,14 @@ int XpadClient::getDataExpose(void *bptr, unsigned short xpadFormat) {
         while (count < data_size){
 
             if (xpadFormat==0){
-                memcpy (&data_buff[i], &data[count], sizeof(int32_t) );
-                buffer_short[i] = (int16_t)(data_buff[i]);
+                memcpy (&data_buff[i], &data[count], sizeof(uint32_t) );
+                buffer_short[i] = (uint16_t)(data_buff[i]);
             }
             else{
-                memcpy (&data_buff[i], &data[count], sizeof(int32_t) );
-                buffer_int[i] = (int32_t)(data_buff[i]);
+                memcpy (&data_buff[i], &data[count], sizeof(uint32_t) );
+                buffer_int[i] = (uint32_t)(data_buff[i]);
             }
-            count += sizeof(int32_t);
+            count += sizeof(uint32_t);
             i++;
         }
 
