@@ -53,6 +53,17 @@ using namespace lima::imXpad;
 	} \
 } \
 
+#define CHECK_DETECTOR_CALIBRATION_ACCESS \
+{ \
+	if (m_process_id == 4) \
+	{ \
+	return; \
+} \
+	else \
+	{ \
+	} \
+} \
+
 //---------------------------
 //- utility thread
 //---------------------------
@@ -788,6 +799,7 @@ void Camera::getImageSize(Size& size)
 {
 	DEB_MEMBER_FUNCT();
 	CHECK_DETECTOR_ACCESS
+	CHECK_DETECTOR_CALIBRATION_ACCESS
 	std::string message, ret;
 	std::stringstream cmd;
 
@@ -853,6 +865,7 @@ void Camera::getDetectorTypeFromHardware(std::string& type)
 {
 	DEB_MEMBER_FUNCT();
 	CHECK_DETECTOR_ACCESS
+	CHECK_DETECTOR_CALIBRATION_ACCESS
 	std::string message;
 	std::stringstream cmd;
 
@@ -872,6 +885,7 @@ void Camera::getDetectorModelFromHardware(std::string& model)
 {
 	DEB_MEMBER_FUNCT();
 	CHECK_DETECTOR_ACCESS
+	CHECK_DETECTOR_CALIBRATION_ACCESS
 	std::string message;
 	std::stringstream cmd;
 
